@@ -11,7 +11,7 @@ body{
     float: right;
     margin: 0px;
     display: block;
-    background-color: #E3E2DF;
+    background-color: #F0F0F0;
     padding: 5px;
     height: 100%;
 
@@ -41,6 +41,20 @@ body{
     width:90%;
     margin: 0px auto;
     margin-top: 10px;
+}
+
+
+#main_table{
+
+    textAlign: center;
+    align: center;
+    width: 90%;
+    margin: 0px auto;
+}
+
+#main_table td H3{
+    text-align: center;
+
 }
 
 

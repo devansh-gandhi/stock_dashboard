@@ -33,22 +33,14 @@ app.layout = html.Div([
 
     dcc.Graph(id='my-graph', config={'displayModeBar': False},),
 
-
     html.Table([
             html.Tr([
                 html.Td(html.H3('News Analysis'), style={'width': '50%'}),
                 html.Td(html.H3('Twitter feed Analysis'), style={'width': '50%'}),
             ]),
 
-            html.Tr([
-                html.Td(id='news_table'),
-
-            ],),
-
-
-        ],
-        style={'textAlign': 'center', 'align': 'center', 'width': '90%', 'margin': '0px auto'}
-    ),
+            html.Tr([ html.Td(id='news_table'), html.Td(id='tweet_table')],),
+        ], id='main_table', ),
 
     ], className="container")
 

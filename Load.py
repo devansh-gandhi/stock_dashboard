@@ -3,6 +3,7 @@ import requests, json, os
 from elasticsearch import Elasticsearch
 
 
+
 class Load:
     es = Elasticsearch([{'host': 'localhost', 'port': '9200'}])
 
@@ -23,7 +24,6 @@ class Load:
                 'close': stock_data['Time Series (Daily)'][value]['3. low'],
                 'low': stock_data['Time Series (Daily)'][value]['4. close'],
                 'volume': stock_data['Time Series (Daily)'][value]['5. volume']
-
             })
 
 
