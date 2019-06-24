@@ -52,7 +52,7 @@ def update_graph(selected_dropdown_value):
     trace1 = []
     trace2 = []
 
-    data_dict = es.search(index='stock_data', body={"size": 100, "query": {"match": {"stock-symbol": selected_dropdown_value}}})
+    data_dict = es.search(index='stock_data', body={"size": 50, "query": {"match": {"stock-symbol": selected_dropdown_value}}})
     initial_df = pd.DataFrame.from_dict(data_dict['hits']['hits'])
     stock_data_df = pd.concat([initial_df.drop(['_source'], axis=1), initial_df['_source'].apply(pd.Series)],axis=1)
 
@@ -93,6 +93,31 @@ def update_news_feed(selected_dropdown_value):
         [html.Tr([html.Td([news_data_df.loc[i]['title']], ), html.Td([news_data_df.loc[i]['sentiment']], style={'width': '30%',})], style={'width': '100%',}) for i in range(len(news_data_df))],
 
     style={'width': '100%', 'display': 'block', 'text-align': 'left', }, id='news_table_data')
+
+
+@app.callback(Output('tweet_table', 'children'),
+              [Input('my-dropdown', 'value')])
+def update_tweet_feed(selected_dropdown_value):
+    dropdown = {"MSFT": "Microsoft", "AAPL": "Apple", "GOOG": "Google", "FB":'Facebook' }
+    tweet_data_dict = es.search(index='tweets_data', body={"size": 5, "query": {"match": {"company_name": dropdown[selected_dropdown_value] }}})
+    initial_df = pd.DataFrame.from_dict(tweet_data_dict['hits']['hits'])
+    tweet_data_df = pd.concat([initial_df.drop(['_source'], axis=1), initial_df['_source'].apply(pd.Series)], axis=1)
+
+    #print(news_data_df.head() )
+    return html.Table(
+
+        [html.Tr([html.Td(html.Th('Tweet Description'),), html.Td(html.Th('Sentiment'), style={'width': '27%', })],
+            style={'width': '100%', 'text-align': 'center', })] +
+
+        [html.Tr([html.Td([tweet_data_df.loc[i]['message']], ), html.Td([tweet_data_df.loc[i]['label']], style={'width': '30%',})], style={'width': '100%',}) for i in range(len(tweet_data_df))],
+
+    style={'width': '100%', 'display': 'block', 'text-align': 'left', }, id='tweet_table_data')
+
+
+
+
+
+
 
 if __name__ == '__main__':
     app.run_server(debug=False)

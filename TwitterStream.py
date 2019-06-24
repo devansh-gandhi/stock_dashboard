@@ -16,13 +16,16 @@ class TweetsStreamDataListener(StreamListener):
         dict_data = json.loads(data)
         tweet_label = Transform.get_sentiment(Transform,dict_data["text"])
         if tweet_label != 'uncategorized':
-            print(tweet_label + " : " + dict_data["text"])
+            #print(tweet_label + " : " + dict_data["text"])
             es.index(index="tweets_data",
                      doc_type="tweet",
                      body={"author": dict_data["user"]["screen_name"],
                            "date": dict_data["created_at"],
                            "label": tweet_label,
-                           "message": dict_data["text"]})
+                           "message": dict_data["text"],
+                           "company_name": keyword},
+
+                     )
 
         return True
 
@@ -40,6 +43,9 @@ if __name__ == '__main__':
     # consumer_secret = "X6cqtrIH6Pe8HFk5I9MaKmcW0SjsEksqk8b3fUfcL9L4Vye4LV"
     # access_token = "206985484-ZR2aQPnxdzBOpSeuobtH3dDLkO4NLhJRwwGLtrmQ"
     # access_token_secret = "lUerNXEmhVlXydVi03tn3LWNPcp1Iy9vaBMeLH2QmRIFZ"
+    keyword = sys.argv[1]
+
+    #print(sys.argv[1])
 
     consumer_key = 'sljGvj4bKLY9LPKlHpySGuMW5'
     consumer_secret = 'MGDfahGilqS0pJBxLOVk5FPAfqluLs51XCzZUWdd8TF2QuQ7WQ'
@@ -49,4 +55,4 @@ if __name__ == '__main__':
     auth = OAuthHandler(consumer_key, consumer_secret)
     auth.set_access_token(access_token, access_token_secret)
     stream = Stream(auth, listener)
-    stream.filter(track=["Microsoft", "Apple", "Google", "Facebook"], languages=["en"])
+    stream.filter(track=[keyword], languages=["en"])
