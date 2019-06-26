@@ -7,8 +7,8 @@ if __name__ == '__main__':
     data = Load('Microsoft')
     data.load_stock_data()
     data.load_news_data()
-    es = Elasticsearch([{'host': 'localhost', 'port': '9200'}])
-    result = es.search(index='stock_data', body={"query": {"match": {"company_name": "Microsoft"}}})
+    #es = Elasticsearch([{'host': 'localhost', 'port': '9200'}])
+    #result = es.search(index='stock_data', body={"query": {"match": {"company_name": "Microsoft"}}})
     #print(result)
 
     #TwitterStream.keyword = 'Apple'
@@ -16,4 +16,4 @@ if __name__ == '__main__':
     #print(TwitterStream.keyword)
 
 
-    os.system('python TwitterStream.py Google' )
+    os.system('python TwitterStream.py Microsoft' )

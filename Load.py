@@ -18,6 +18,7 @@ class Load:
         for value in stock_data['Time Series (Daily)']:
             self.es.index(index='stock_data', ignore=400, doc_type='external', body={
                 'company_name': self.company_name,
+                'stock-symbol': stock_data['Meta Data']['2. Symbol'],
                 'timestamp': value,
                 'open': stock_data['Time Series (Daily)'][value]['1. open'],
                 'high': stock_data['Time Series (Daily)'][value]['2. high'],

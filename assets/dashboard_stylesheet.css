@@ -1,22 +1,53 @@
+* {
+  margin: 0;
+  padding: 0;
+}
 
-body{
-    margin:0;
+body, html {
+    margin: 0px;
     height: 100%;
-
-
+    width: 100%;
 }
 
 .container{
-    width: 75%;
+    width: 100%;
     float: right;
     margin: 0px;
-    display: block;
-    background-color: #F0F0F0;
-    padding: 5px;
-    height: 100%;
+    display:flex;
+    vertical-align: top;
+    background-color: black;
+    min-height: 100%;
+    height: 100vh;
+}
 
+.left-container{
+    display: inline-block;
+    width: 25%;
+    background-color: #0040ff;
+    display: block;
+    height: 100%;
+    float: left;
+    margin: 0px;
 
 }
+
+
+#pie-chart{
+    align: center;
+    margin: 0px auto;
+    background-color: red;
+}
+
+
+
+.right-container{
+    display: inline-block;
+    width: 75%;
+    background-color: #F3F3F3;
+    margin: 0px auto;
+
+}
+
 
 #my-dropdown{
 
@@ -52,14 +83,22 @@ body{
     margin: 0px auto;
 }
 
+#main_table tr{
+    vertical-align: top;
+
+}
+
 #main_table td H3{
     text-align: center;
 
 }
 
 
+
 #news_table_data{
      border-collapse: collapse;
+    width: 90%;
+    
 
 }
 
@@ -67,5 +106,19 @@ body{
 #news_table_data tr td{
     border: 1px solid black;
     padding: 5px;
+    font-size: 10pt ;
+
+}
+
+#tweet_table_data{
+     border-collapse: collapse;
+
+}
+
+
+#tweet_table_data tr td{
+    border: 1px solid black;
+    padding: 5px;
+    font-size: 10pt ;
 
 }

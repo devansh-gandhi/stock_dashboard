@@ -21,26 +21,40 @@ else:
     app_name = 'stock-timeseriesplot'
 
 
-app.layout = html.Div([
+app.layout =html.Div([
 
-    html.H1("Stock Prices", style={'textAlign': 'center', 'margin': '0px', }),
+    html.Div([ html.H1('test'),
+
+    html.Div([ dcc.Graph(id='pie-chart', config={'displayModeBar': False}, ), ], id='pie-chart-div'),
+
+    ], className='left-container'),
 
     html.Div([
-        dcc.Dropdown(id='my-dropdown',
-                options=[{'label': 'Microsoft', 'value': 'MSFT'}, {'label': 'Apple', 'value': 'AAPL'},
+
+
+        html.H1("Stock Prices Dashboard" ,style={'textAlign': 'center', 'margin': '0px', }),
+
+        html.Div([
+            dcc.Dropdown(id='my-dropdown',
+                    options=[{'label': 'Microsoft', 'value': 'MSFT'}, {'label': 'Apple', 'value': 'AAPL'},
                          {'label': 'Google', 'value': 'GOOG'}], value='MSFT',),
         ], id='my-dropdown-div'),
 
-    dcc.Graph(id='my-graph', config={'displayModeBar': False},),
+        dcc.Graph(id='my-graph', config={'displayModeBar': False}, ),
 
-    html.Table([
+
+        html.Table([
             html.Tr([
                 html.Td(html.H3('News Analysis'), style={'width': '50%'}),
                 html.Td(html.H3('Twitter feed Analysis'), style={'width': '50%'}),
             ]),
 
-            html.Tr([ html.Td(id='news_table'), html.Td(id='tweet_table')],),
+            html.Tr([html.Td(id='news_table'), html.Td(id='tweet_table')],),
         ], id='main_table', ),
+
+    ], className='right-container'),
+
+
 
     ], className="container")
 
@@ -74,6 +88,37 @@ def update_graph(selected_dropdown_value):
                     'type': 'date'},yaxis={"title":"Price (USD)"})}
     return figure
 
+
+@app.callback(Output('pie-chart', 'figure'),
+              [Input('my-dropdown', 'value')])
+def update_graph(selected_dropdown_value):
+    dropdown = {"MSFT": "Microsoft", "AAPL": "Apple", "GOOG": "Google", "FB": 'Facebook'}
+
+    label_data_dict = es.search(index='tweets_data', body={"size": 100, "query": {"match": {"company_name": dropdown[selected_dropdown_value]}}})
+    initial_df = pd.DataFrame.from_dict(label_data_dict['hits']['hits'])
+    label_data_df = pd.concat([initial_df.drop(['_source'], axis=1), initial_df['_source'].apply(pd.Series)], axis=1)
+
+    news_data_dict = es.search(index='news_data', body={"size": 100, "query": {"match": {"company_name": dropdown[selected_dropdown_value]}}})
+    initial_df = pd.DataFrame.from_dict(news_data_dict['hits']['hits'])
+    news_data_df = pd.concat([initial_df.drop(['_source'], axis=1), initial_df['_source'].apply(pd.Series)], axis=1)
+
+
+    negative = label_data_df.loc[label_data_df.label == 'Negative', 'label'].count() + news_data_df.loc[news_data_df.sentiment == 'Negative', 'sentiment'].count()
+    positive = label_data_df.loc[label_data_df.label == 'Positive', 'label'].count() + news_data_df.loc[news_data_df.sentiment == 'Positive', 'sentiment'].count()
+
+    data = [go.Pie(values=[positive.item(),negative.item()], labels=['Positive','Negative'])]
+
+    figure = {
+        'data':data,
+        'layout': go.Layout(
+            #paper_bgcolor='rgba(0,0,0,0)',
+            #plot_bgcolor='rgba(0,0,0,0)'
+
+    ),
+
+    }
+
+    return figure
 
 
 @app.callback(Output('news_table', 'children'),
@@ -112,8 +157,6 @@ def update_tweet_feed(selected_dropdown_value):
         [html.Tr([html.Td([tweet_data_df.loc[i]['message']], ), html.Td([tweet_data_df.loc[i]['label']], style={'width': '30%',})], style={'width': '100%',}) for i in range(len(tweet_data_df))],
 
     style={'width': '100%', 'display': 'block', 'text-align': 'left', }, id='tweet_table_data')
-
-
 
 
 

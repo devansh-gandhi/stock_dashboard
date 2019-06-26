@@ -15,7 +15,7 @@ class TweetsStreamDataListener(StreamListener):
     def on_data(self, data):
         dict_data = json.loads(data)
         tweet_label = Transform.get_sentiment(Transform,dict_data["text"])
-        if tweet_label != 'uncategorized':
+        if tweet_label != 'uncategorized' and ('RT @' not in dict_data['text']):
             #print(tweet_label + " : " + dict_data["text"])
             es.index(index="tweets_data",
                      doc_type="tweet",
