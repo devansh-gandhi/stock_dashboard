@@ -4,7 +4,7 @@ import TwitterStream
 import os
 
 if __name__ == '__main__':
-    data = Load('Microsoft')
+    data = Load('Google')
     data.load_stock_data()
     data.load_news_data()
     #es = Elasticsearch([{'host': 'localhost', 'port': '9200'}])
@@ -16,4 +16,4 @@ if __name__ == '__main__':
     #print(TwitterStream.keyword)
 
 
-    os.system('python TwitterStream.py Microsoft' )
+    os.system('python TwitterStream.py Google' )
