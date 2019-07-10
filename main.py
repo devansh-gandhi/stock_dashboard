@@ -7,7 +7,6 @@ if __name__ == '__main__':
     data = Load('Apple')
     data.load_stock_data()
     data.load_news_data()
-    print(1)
     es = Elasticsearch([{'host': 'localhost', 'port': '9200'}])
     result = es.search(index='news_data', body={"query": {"match": {"company_name": "Apple"}}})
     print(result)
@@ -17,4 +16,4 @@ if __name__ == '__main__':
     #print(TwitterStream.keyword)
 
 
-    #os.system('python TwitterStream.py Apple' )
+    os.system('python TwitterStream.py Apple' )
