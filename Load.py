@@ -37,7 +37,9 @@ class Load:
                 'description': article['description'],
                 'url': article['url'],
                 'sentiment': article['sentiment'],
-                'company_name': self.company_name
+                'ner_tags': article['ner_tags'],
+                'company_name': self.company_name,
+
             })
 
 

@@ -29,7 +29,8 @@ class Extract:
 
     def get_news_extract(self):
         response = requests.get(
-            'https://newsapi.org/v2/everything?q=' + self.name + '&from=2019-06-09&to=2019-06-09&sortBy=popularity&apiKey=30f781a305e34b55bcb18fd76d3fbd8c')
+            'https://newsapi.org/v2/everything?q=' + self.name + '&sources=the-wall-street-journal,the-verge,techcrunch,cnbc,cnn,engadget,the-new-york-times,the-economist,techradar,reuters,google-news,financial-post,business-insider,bloomberg&pageSize=20&sortBy=publishedAt&apiKey=30f781a305e34b55bcb18fd76d3fbd8c'
+        )
         # Print the status code of the response.
         return (response)
 
