@@ -32,7 +32,7 @@ app.layout =html.Div([
     html.Div([
 
 
-        html.H1("Stock Prices Dashboard" ,style={'textAlign': 'center', 'margin': '0px', }),
+        html.H1("Stock Dashboard",style={'textAlign': 'center', 'margin': '0px', 'font-size':'20px' }),
 
         html.Div([
             dcc.Dropdown(id='my-dropdown',
@@ -83,7 +83,7 @@ def update_graph(selected_dropdown_value):
     data = [val for sublist in traces for val in sublist]
     figure = {'data': data,
         'layout': go.Layout(colorway=["#5E0DAC", '#FF4F00', '#375CB1', '#FF7400', '#FFF400', '#FF0056'],
-            height=300,title=f"Opening and Closing Prices for " + dropdown[selected_dropdown_value] + " Over Time",
+            height=250,title=f"Opening and Closing Prices for " + dropdown[selected_dropdown_value] + " Over Time",
             xaxis={"title":"Date",
                     'type': 'date'},yaxis={"title":"Price (USD)"})}
     return figure
@@ -91,7 +91,7 @@ def update_graph(selected_dropdown_value):
 
 @app.callback(Output('pie-chart', 'figure'),
               [Input('my-dropdown', 'value')])
-def update_graph(selected_dropdown_value):
+def update_piechart(selected_dropdown_value):
     dropdown = {"MSFT": "Microsoft", "AAPL": "Apple", "GOOG": "Google", "FB": 'Facebook'}
 
     label_data_dict = es.search(index='tweets_data', body={"size": 100, "query": {"match": {"company_name": dropdown[selected_dropdown_value]}}})
@@ -113,6 +113,8 @@ def update_graph(selected_dropdown_value):
         'layout': go.Layout(
             #paper_bgcolor='rgba(0,0,0,0)',
             #plot_bgcolor='rgba(0,0,0,0)'
+            height=250,
+
 
     ),
 
@@ -125,7 +127,7 @@ def update_graph(selected_dropdown_value):
               [Input('my-dropdown', 'value')])
 def update_news_feed(selected_dropdown_value):
     dropdown = {"MSFT": "Microsoft", "AAPL": "Apple", "GOOG": "Google", }
-    news_data_dict = es.search(index='news_data', body={"size": 5, "query": {"match": {"company_name": dropdown[selected_dropdown_value] }}})
+    news_data_dict = es.search(index='news_data', body={"size": 10, "query": {"match": {"company_name": dropdown[selected_dropdown_value] }}})
     initial_df = pd.DataFrame.from_dict(news_data_dict['hits']['hits'])
     news_data_df = pd.concat([initial_df.drop(['_source'], axis=1), initial_df['_source'].apply(pd.Series)], axis=1)
 
@@ -144,7 +146,7 @@ def update_news_feed(selected_dropdown_value):
               [Input('my-dropdown', 'value')])
 def update_tweet_feed(selected_dropdown_value):
     dropdown = {"MSFT": "Microsoft", "AAPL": "Apple", "GOOG": "Google", "FB":'Facebook' }
-    tweet_data_dict = es.search(index='tweets_data', body={"size": 5, "query": {"match": {"company_name": dropdown[selected_dropdown_value] }}})
+    tweet_data_dict = es.search(index='tweets_data', body={"size": 8, "query": {"match": {"company_name": dropdown[selected_dropdown_value] }}})
     initial_df = pd.DataFrame.from_dict(tweet_data_dict['hits']['hits'])
     tweet_data_df = pd.concat([initial_df.drop(['_source'], axis=1), initial_df['_source'].apply(pd.Series)], axis=1)
 
@@ -152,7 +154,7 @@ def update_tweet_feed(selected_dropdown_value):
     return html.Table(
 
         [html.Tr([html.Td(html.Th('Tweet Description'),), html.Td(html.Th('Sentiment'), style={'width': '27%', })],
-            style={'width': '100%', 'text-align': 'center', })] +
+            style={'width': '90%', 'text-align': 'center', })] +
 
         [html.Tr([html.Td([tweet_data_df.loc[i]['message']], ), html.Td([tweet_data_df.loc[i]['label']], style={'width': '30%',})], style={'width': '100%',}) for i in range(len(tweet_data_df))],
 

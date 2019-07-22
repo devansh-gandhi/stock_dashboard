@@ -4,16 +4,13 @@ import TwitterStream
 import os
 
 if __name__ == '__main__':
-    data = Load('Apple')
+    data = Load('Google')
     data.load_stock_data()
     data.load_news_data()
-    es = Elasticsearch([{'host': 'localhost', 'port': '9200'}])
-    result = es.search(index='news_data', body={"query": {"match": {"company_name": "Apple"}}})
-    print(result)
+    #es = Elasticsearch([{'host': 'localhost', 'port': '9200'}])
+    #result = es.search(index='news_data', body={"query": {"match": {"company_name": "Apple"}}})
+    #print(result)
 
     #TwitterStream.keyword = 'Apple'
-
     #print(TwitterStream.keyword)
-
-
-    os.system('python TwitterStream.py Apple' )
+    #os.system('python TwitterStream.py Apple' )

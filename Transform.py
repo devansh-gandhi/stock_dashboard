@@ -23,16 +23,12 @@ class Transform:
         return stock_data
 
     def get_ner_dict(self,description):
-        ner_dict = {}
+        ner_list = []
         spacy_nlp = spacy.load('en')
         document = spacy_nlp(description)
         for element in document.ents:
-            # print('Type: %s, Value: %s' % (element.label_, element))
-            if element.label_ not in ner_dict:
-                ner_dict[element.label_] = [str(element)]
-            else:
-                ner_dict[element.label_].append(str(element))
-        return ner_dict
+            ner_list.append(str(element))
+        return ner_list
 
     def get_news_data(self):
         data = self.extract.get_news_extract().json()

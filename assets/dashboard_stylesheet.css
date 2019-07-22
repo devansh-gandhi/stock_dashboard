@@ -15,13 +15,12 @@ body, html {
     margin: 0px;
     display:flex;
     vertical-align: top;
-    background-color: black;
     min-height: 100%;
     height: 100vh;
 }
 
 .left-container{
-    display: inline-block;
+    display:block;
     width: 25%;
     background-color: #0040ff;
     display: block;
@@ -32,22 +31,40 @@ body, html {
 }
 
 
-#pie-chart{
-    align: center;
-    margin: 0px auto;
-    background-color: red;
-}
-
-
 
 .right-container{
     display: inline-block;
-    width: 75%;
-    background-color: #F3F3F3;
-    margin: 0px auto;
+    width:100%;
+    background-color: #ffffff;
+    margin: 0 auto;
 
 }
 
+#tabs{
+    display: inline-block;
+    width: 100%;
+    margin: 0 auto;
+    margin-top: 5px;
+
+}
+
+#sub_tab {
+    width: 90%;
+    margin: 0 auto;
+    display: flex;
+    justify-content:space-between;
+}
+
+#radio-div {
+    display: block;
+    margin: 0 auto;
+    text-align: center;
+}
+
+#radio-div label{
+    margin-left: 50px;
+
+}
 
 #my-dropdown{
 
@@ -55,13 +72,14 @@ body, html {
     margin-left: auto;
     margin-right: auto;
     margin-top: 5px;
-
+    width: 100%;
 }
 
 #my-dropdown-div{
 
-        width:40%;
-        margin:0px auto;
+    width: 90%;
+    margin:0px auto;
+    margin-top: 3%;
 }
 
 
@@ -70,8 +88,72 @@ body, html {
     textAlign: center;
     align: center;
     width:90%;
+    margin: 0 auto;
+    margin-top: 10px;
+    box-shadow: 1px 1px 3px 3px #b3b3b3;
+}
+
+
+
+.indicators{
+    width:32%;
+    textAlign: center;
+    align: center;
+    margin:0px auto;
+    margin-top: 9px;
+    background-color: inherit;
+    display:inline-block;
+    padding: 2px;
+    box-shadow:1px 1px 3px 3px #b3b3b3;
+
+}
+
+
+.sentiment_div{
+    display: flex;
+    justify-content:space-between;
+    textAlign: center;
+    align: center;
+    width: 87%;
     margin: 0px auto;
     margin-top: 10px;
+    vertical-align: top;
+
+}
+
+.sentiment_div H3{
+    text-align: center;
+    width: 95%;
+    margin-top: 1%;
+    font-size: 17px;
+
+}
+
+
+.div-30{
+
+    width: 28%;
+    background-color: white;
+   }
+
+.div-70{
+    width:69%;
+
+   }
+
+
+.pie-chart-div{
+    margin: 0 auto;
+    box-shadow: 1px 1px 3px 3px #b3b3b3;
+    height: 250px;
+    vertical-align: top;
+
+}
+
+
+#pie-chart{
+    align: center;
+    margin: 0 auto;
 }
 
 
@@ -81,6 +163,7 @@ body, html {
     align: center;
     width: 90%;
     margin: 0px auto;
+    margin-top: 10px;
 }
 
 #main_table tr{
@@ -88,37 +171,53 @@ body, html {
 
 }
 
+#main_table tr td{
+    width: 45%;
+
+}
+
 #main_table td H3{
     text-align: center;
+    width: 95%;
+    margin-top: 1%;
+    margin-bottom: 1%;
+    font-size: 17px;
 
 }
 
 
-
 #news_table_data{
-     border-collapse: collapse;
-    width: 90%;
-
-
+    border-collapse: collapse;
+    height: 250px;
+    overflow-y: scroll;
+    margin: 0 auto;
+    box-shadow: 1px 1px 3px 3px #b3b3b3;
+    width: 100%;
+    
 }
 
 
 #news_table_data tr td{
     border: 1px solid black;
     padding: 5px;
-    font-size: 10pt ;
+    font-size: 8pt ;
+    width: 80%;
 
 }
 
 #tweet_table_data{
-     border-collapse: collapse;
-
+    border-collapse: collapse;
+    height: 250px;
+    overflow-y: scroll;
+    margin: 0 auto;
+    box-shadow: 1px 1px 3px 3px #b3b3b3;
 }
 
 
 #tweet_table_data tr td{
     border: 1px solid black;
     padding: 5px;
-    font-size: 10pt ;
+    font-size: 8pt ;
+    width: 80%;
 
 }
