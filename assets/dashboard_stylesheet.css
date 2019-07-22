@@ -193,7 +193,6 @@ body, html {
     margin: 0 auto;
     box-shadow: 1px 1px 3px 3px #b3b3b3;
     width: 100%;
-
 }
 
 
@@ -201,8 +200,7 @@ body, html {
     border: 1px solid black;
     padding: 5px;
     font-size: 8pt ;
-    width: 80%;
-
+    width: 100vh;
 }
 
 #tweet_table_data{
@@ -218,6 +216,5 @@ body, html {
     border: 1px solid black;
     padding: 5px;
     font-size: 8pt ;
-    width: 80%;
-
+    width: 100vh;
 }

@@ -296,7 +296,7 @@ def update_news_feed(selected_dropdown_value,clickData):
         [html.Tr([html.Td(html.Th('Title'),), html.Td(html.Th('Sentiment'), style={'width': '27%', })],
             style={'width': '100%', 'text-align': 'center', 'background-color': '#fff' })] +
 
-        [html.Tr([html.Td([row['title']], ), html.Td([row['sentiment']], style={'width': '30%',})], style={'width': '100%',}) for index,row in news_data_df.iterrows()],
+        [html.Tr([html.Td([row['title']], ), html.Td([row['sentiment']], style={'width': '30%',})], ) for index,row in news_data_df.iterrows()],
 
     style={'width': '95%', 'display': 'block', 'text-align': 'left', }, id='news_table_data')
 
