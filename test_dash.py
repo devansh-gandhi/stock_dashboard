@@ -270,7 +270,7 @@ def update_piechart(selected_dropdown_value):
         'layout': go.Layout(
             #paper_bgcolor='rgba(0,0,0,0)',
             #plot_bgcolor='rgba(0,0,0,0)'
-            height=250,legend=dict(orientation='h',yanchor='top',xanchor='center',y=0, x=0.5, ), margin=go.layout.Margin(l=10, r=10, b=10, t=10, ),
+            height=250,legend=dict(orientation='h',yanchor='bottom',xanchor='center',y=1.2, x=0.5, ), margin=go.layout.Margin(l=10, r=10, b=10, t=10, ),
     ),
     }
 
