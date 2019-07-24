@@ -7,12 +7,13 @@ import dash_html_components as html
 import pandas as pd
 import plotly.graph_objs as go
 from dash.dependencies import Input, Output
+import dash_table
 import json
 
 from elasticsearch import Elasticsearch
 
 app = dash.Dash(__name__)
-
+app.config.suppress_callback_exceptions = True
 
 es = Elasticsearch([{'host': 'localhost', 'port': '9200'}])
 
@@ -20,6 +21,79 @@ if 'DYNO' in os.environ:
     app_name = os.environ['DASH_APP_NAME']
 else:
     app_name = 'stock-timeseriesplot'
+
+
+# returns modal (hidden by default)
+
+def modal():
+    return html.Div(
+        html.Div(
+            [
+                html.Div(
+                    [
+                        # modal header
+                        html.Div(
+                            [
+                                html.Span(
+                                    "New Opportunity",
+                                    style={
+                                        "color": "#506784",
+                                        "fontWeight": "bold",
+                                        "fontSize": "20",
+                                    },
+                                ),
+                                html.Span(
+                                    "×",
+                                    id="opportunities_modal_close",
+                                    n_clicks=0,
+                                    style={
+                                        "float": "right",
+                                        "cursor": "pointer",
+                                        "marginTop": "0",
+                                        "marginBottom": "17",
+                                    },
+                                ),
+                            ],
+                            className="row",
+                            style={"borderBottom": "1px solid #C8D4E3"},
+                        ),
+                        # modal form
+                        html.Div(
+                            [
+                                html.P(id='row_no'),
+                            ],
+                            className="row",
+                            style={"paddingTop": "2%"},
+                        ),
+                        # submit button
+                        html.P(
+                            "note that this is just a demo application, and any new leads or opportunities you submit in this form will not be reflected.\nIn order to use the full functionality of the app, please clone the repository and place your own salesforce username, password, and API token into your environment variables.",
+                        ),
+                        html.Span(
+                            "Submit",
+                            id="submit_new_opportunity",
+                            n_clicks=0,
+                            className="button button--primary add",
+                        ),
+                    ],
+                    className="modal-content",
+                    style={"textAlign": "center"},
+                )
+            ],
+            className="modal",
+        ),
+        id="opportunities_modal",
+        style={"display": "none"},
+    )
+
+
+
+
+
+
+
+
+
 
 
 app.layout = html.Div([
@@ -33,6 +107,8 @@ app.layout = html.Div([
             dcc.Tab(label='Overview',children=[
                 html.Div([
 
+
+
                     dcc.RadioItems(id='radio-div',
                         options=[
                             {'label': ' Company Name', 'value': 'CN'},
@@ -45,6 +121,7 @@ app.layout = html.Div([
                     dcc.Dropdown(id='my-dropdown',
                             options=[{'label': 'Microsoft', 'value': 'MSFT'}, {'label': 'Apple', 'value': 'AAPL'},
                                  {'label': 'Google', 'value': 'GOOG'}], value='MSFT',),
+
                 ], id='my-dropdown-div'),
 
 
@@ -69,8 +146,18 @@ app.layout = html.Div([
 
                 html.Div([
                     html.Div([ html.H3('Sentiment Chart'), ], className='div-30'),
-                    html.Div([html.H3('Word Cloud'),], className='div-70' ),
+                    html.Div([html.H3('Word Cloud'), ], className='div-70'),
 
+                    html.Div(
+                        html.Span(
+                        "Add new",
+                        id="new_opportunity",
+                        n_clicks=0,
+                        className="button button--primary add",
+                    ),
+                    className="two columns",
+                    style={"float": "right", 'display':'block', 'background-color':'#f00'},
+                    ),
 
                 ], className='sentiment_div', ),
 
@@ -81,32 +168,31 @@ app.layout = html.Div([
                 ], className='sentiment_div', ),
 
 
-                html.Table([
-                    html.Tr([
-                        html.Td(html.H3('News Analysis'),),
-                        html.Td(html.H3('Twitter feed Analysis'),),
-                    ]),
 
-                    html.Tr([html.Td(id='news_table'), html.Td(id='tweet_table')],),], id='main_table', ),
+                html.Div([
+                    html.Div([html.H3('News Analysis') ], className='div-50'),
+                    html.Div([html.H3('Twitter feed Analysis') ], className='div-50'),
+                ], className='sentiment_div', id='tp' ),
 
+                html.Div([
+                    html.Div([],id='news_table'  , className='div-50'),
+                    html.Div([ ],id='tweet_table', className='div-50'),
+                ], className='sentiment_div', ),
 
             ]),
 
             dcc.Tab(label='Earnings Call Analysis', children=[
 
              ]),
-
         ]),
 
-
-
     ], className='right-container'),
-
+    modal(),
     ], className="container")
 
 
 
-
+app.scripts.append_script({"external_url": ['https://code.jquery.com/jquery-3.2.1.min.js',]})
 
 
 
@@ -316,16 +402,57 @@ def update_tweet_feed(selected_dropdown_value,clickData ):
         sentiment = clickData['points'][0]['label']
         tweet_data_df = tweet_data_df.loc[tweet_data_df['label'] == sentiment]
 
+    tweet_data_df = tweet_data_df.loc[:,['message','label']]
 
-    return html.Table(
+    #{'name':'Tweet Description'}, {'name':'Sentiment'}
+    return dash_table.DataTable(
+        id='tweet_table_data',
+        columns=[{"name":'Tweet Description',"id":'message'}, {'name':'Sentiment',"id":'label'}],
+        data= tweet_data_df.to_dict('records'),
+        row_selectable='single',
+        style_cell={
+            'minWidth': '0px', 'maxWidth': '85%',
+            'whiteSpace': 'normal',
+            'textAlign': 'left',
+        },
+        css=[{
+            'selector': '.dash-cell div.dash-cell-value',
+            'rule': 'display: inline; white-space: inherit; overflow: inherit; text-overflow: inherit;'
+        }],
 
-        [html.Tr([html.Td(html.Th('Tweet Description'),), html.Td(html.Th('Sentiment'), style={'width': '27%', })],
-            style={ 'text-align': 'center', })] +
+        )
 
-        [html.Tr([html.Td([row['message']], ), html.Td([row['label']], style={'width': '30%',})], style={'width': '100%',}) for index,row in tweet_data_df.iterrows()],
+# hide/show modal
+@app.callback(
+    [Output("opportunities_modal", "style"),
+     Output("row_no", "children"),
+     ],
+    [Input('tweet_table_data', "rows"),
+     Input('tweet_table_data',"selected_row_indices"),
+     Input("opportunities_modal_close", "n_clicks"),]
+)
+def display_opportunities_modal_callback(rows,selected_rows,nclicks):
+    if nclicks > 0:
+        nclicks = 0
+        return {"display": "none"}, nclicks
+    elif selected_rows is not None:
+        dff = pd.DataFrame(rows).iloc[selected_rows]
+        #derived_virtual_selected_rows = []
+        return {"display": "block"}, dff
+        #return selected_rows
+    else:
+        return {"display": "none"}, []
 
-    style={'width': '95%', 'display': 'block', 'text-align': 'left', }, id='tweet_table_data')
 
+
+@app.callback(
+    Output("tweet_table_data", "selected_rows"),
+    [
+        Input("opportunities_modal_close", "n_clicks"),
+    ],
+)
+def close_modal_callback(n):
+    return None
 
 
 if __name__ == '__main__':
