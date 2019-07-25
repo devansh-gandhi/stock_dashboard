@@ -66,9 +66,7 @@ def modal():
                             style={"paddingTop": "2%"},
                         ),
                         # submit button
-                        html.P(
-                            "note that this is just a demo application, and any new leads or opportunities you submit in this form will not be reflected.\nIn order to use the full functionality of the app, please clone the repository and place your own salesforce username, password, and API token into your environment variables.",
-                        ),
+
                         html.Span(
                             "Submit",
                             id="submit_new_opportunity",
@@ -397,10 +395,10 @@ def update_tweet_feed(selected_dropdown_value,clickData ):
     initial_df = pd.DataFrame.from_dict(tweet_data_dict['hits']['hits'])
     tweet_data_df = pd.concat([initial_df.drop(['_source'], axis=1), initial_df['_source'].apply(pd.Series)], axis=1)
 
-
     if clickData:
         sentiment = clickData['points'][0]['label']
         tweet_data_df = tweet_data_df.loc[tweet_data_df['label'] == sentiment]
+
 
     tweet_data_df = tweet_data_df.loc[:,['message','label']]
 
@@ -427,19 +425,20 @@ def update_tweet_feed(selected_dropdown_value,clickData ):
     [Output("opportunities_modal", "style"),
      Output("row_no", "children"),
      ],
-    [Input('tweet_table_data', "rows"),
-     Input('tweet_table_data',"selected_row_indices"),
+    [
+    Input('tweet_table_data', "rows"),
+     Input('tweet_table_data',"selected_rows"),
      Input("opportunities_modal_close", "n_clicks"),]
 )
 def display_opportunities_modal_callback(rows,selected_rows,nclicks):
     if nclicks > 0:
         nclicks = 0
         return {"display": "none"}, nclicks
-    elif selected_rows is not None:
-        dff = pd.DataFrame(rows).iloc[selected_rows]
+    elif selected_rows:
+        #selected_list = [rows[i] for i in selected_rows]
+        #dff = pd.DataFrame(rows).iloc[selected_rows]
         #derived_virtual_selected_rows = []
-        return {"display": "block"}, dff
-        #return selected_rows
+        return {"display": "block"}, selected_rows
     else:
         return {"display": "none"}, []
 
