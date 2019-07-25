@@ -15,6 +15,7 @@ from elasticsearch import Elasticsearch
 app = dash.Dash(__name__)
 app.config.suppress_callback_exceptions = True
 
+
 es = Elasticsearch([{'host': 'localhost', 'port': '9200'}])
 
 if 'DYNO' in os.environ:
@@ -83,8 +84,6 @@ def modal():
         id="opportunities_modal",
         style={"display": "none"},
     )
-
-
 
 
 
@@ -170,11 +169,12 @@ app.layout = html.Div([
                 html.Div([
                     html.Div([html.H3('News Analysis') ], className='div-50'),
                     html.Div([html.H3('Twitter feed Analysis') ], className='div-50'),
-                ], className='sentiment_div', id='tp' ),
+                ], className='sentiment_div', id='tp'),
 
                 html.Div([
-                    html.Div([],id='news_table'  , className='div-50'),
-                    html.Div([ ],id='tweet_table', className='div-50'),
+                    html.Div([],id='news_table', className='div-50'),
+
+                    html.Div([ ], id = 'tweet_table', className='div-50'),
                 ], className='sentiment_div', ),
 
             ]),
@@ -404,54 +404,23 @@ def update_tweet_feed(selected_dropdown_value,clickData ):
 
     #{'name':'Tweet Description'}, {'name':'Sentiment'}
     return dash_table.DataTable(
-        id='tweet_table_data',
-        columns=[{"name":'Tweet Description',"id":'message'}, {'name':'Sentiment',"id":'label'}],
-        data= tweet_data_df.to_dict('records'),
-        row_selectable='single',
-        style_cell={
-            'minWidth': '0px', 'maxWidth': '85%',
-            'whiteSpace': 'normal',
-            'textAlign': 'left',
-        },
-        css=[{
-            'selector': '.dash-cell div.dash-cell-value',
-            'rule': 'display: inline; white-space: inherit; overflow: inherit; text-overflow: inherit;'
-        }],
+                        id='tweet_table_data',
+                        columns=[{"name":'Tweet Description',"id":'message'}, {'name':'Sentiment',"id":'label'}],
+                        data=tweet_data_df.to_dict('records'),
+                        row_selectable='single',
+                        style_cell={
+                            'minWidth': '0px', 'maxWidth': '85%',
+                            'whiteSpace': 'normal',
+                            'textAlign': 'left',
+                        },
+                        css=[{
+                                'selector': '.dash-cell div.dash-cell-value',
+                                'rule': 'display: inline; white-space: inherit; overflow: inherit; text-overflow: inherit;'
+                             }],
 
-        )
-
-# hide/show modal
-@app.callback(
-    [Output("opportunities_modal", "style"),
-     Output("row_no", "children"),
-     ],
-    [
-    Input('tweet_table_data', "rows"),
-     Input('tweet_table_data',"selected_rows"),
-     Input("opportunities_modal_close", "n_clicks"),]
-)
-def display_opportunities_modal_callback(rows,selected_rows,nclicks):
-    if nclicks > 0:
-        nclicks = 0
-        return {"display": "none"}, nclicks
-    elif selected_rows:
-        #selected_list = [rows[i] for i in selected_rows]
-        #dff = pd.DataFrame(rows).iloc[selected_rows]
-        #derived_virtual_selected_rows = []
-        return {"display": "block"}, selected_rows
-    else:
-        return {"display": "none"}, []
+                        )
 
 
-
-@app.callback(
-    Output("tweet_table_data", "selected_rows"),
-    [
-        Input("opportunities_modal_close", "n_clicks"),
-    ],
-)
-def close_modal_callback(n):
-    return None
 
 
 if __name__ == '__main__':
