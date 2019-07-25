@@ -7,6 +7,7 @@ import dash_html_components as html
 import pandas as pd
 import plotly.graph_objs as go
 from dash.dependencies import Input, Output
+import dash_table
 
 from elasticsearch import Elasticsearch
 
@@ -49,7 +50,7 @@ app.layout =html.Div([
                 html.Td(html.H3('Twitter feed Analysis'), style={'width': '50%'}),
             ]),
 
-            html.Tr([html.Td(id='news_table'), html.Td(id='tweet_table')],),
+            html.Tr([html.Td(id='news_table'), html.Td([], id='tweet_table')],),
         ], id='main_table', ),
 
     ], className='right-container'),
@@ -142,27 +143,29 @@ def update_news_feed(selected_dropdown_value):
     style={'width': '100%', 'display': 'block', 'text-align': 'left', }, id='news_table_data')
 
 
-@app.callback(Output('tweet_table', 'children'),
-              [Input('my-dropdown', 'value')])
-def update_tweet_feed(selected_dropdown_value):
+@app.callback(Output('tweet_table_data', 'data'),
+              [Input('my-dropdown', 'value'),
+               Input('pie-chart', 'clickData'), ])
+
+def update_tweet_feed(selected_dropdown_value,clickData ):
     dropdown = {"MSFT": "Microsoft", "AAPL": "Apple", "GOOG": "Google", "FB":'Facebook' }
-    tweet_data_dict = es.search(index='tweets_data', body={"size": 8, "query": {"match": {"company_name": dropdown[selected_dropdown_value] }}})
+    tweet_data_dict = es.search(index='tweets_data', body={"size": 20, "query": {"match": {"company_name": dropdown[selected_dropdown_value] }}})
     initial_df = pd.DataFrame.from_dict(tweet_data_dict['hits']['hits'])
     tweet_data_df = pd.concat([initial_df.drop(['_source'], axis=1), initial_df['_source'].apply(pd.Series)], axis=1)
 
-    #print(news_data_df.head() )
-    return html.Table(
-
-        [html.Tr([html.Td(html.Th('Tweet Description'),), html.Td(html.Th('Sentiment'), style={'width': '27%', })],
-            style={'width': '90%', 'text-align': 'center', })] +
-
-        [html.Tr([html.Td([tweet_data_df.loc[i]['message']], ), html.Td([tweet_data_df.loc[i]['label']], style={'width': '30%',})], style={'width': '100%',}) for i in range(len(tweet_data_df))],
-
-    style={'width': '100%', 'display': 'block', 'text-align': 'left', }, id='tweet_table_data')
+    if clickData:
+        sentiment = clickData['points'][0]['label']
+        tweet_data_df = tweet_data_df.loc[tweet_data_df['label'] == sentiment]
 
 
+    tweet_data_df = tweet_data_df.loc[:,['message','label']]
+
+    #{'name':'Tweet Description'}, {'name':'Sentiment'}
+    return tweet_data_df.to_dict('records')
 
 
 
 if __name__ == '__main__':
     app.run_server(debug=False)
+
+

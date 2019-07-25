@@ -104,8 +104,6 @@ app.layout = html.Div([
             dcc.Tab(label='Overview',children=[
                 html.Div([
 
-
-
                     dcc.RadioItems(id='radio-div',
                         options=[
                             {'label': ' Company Name', 'value': 'CN'},
@@ -145,16 +143,6 @@ app.layout = html.Div([
                     html.Div([ html.H3('Sentiment Chart'), ], className='div-30'),
                     html.Div([html.H3('Word Cloud'), ], className='div-70'),
 
-                    html.Div(
-                        html.Span(
-                        "Add new",
-                        id="new_opportunity",
-                        n_clicks=0,
-                        className="button button--primary add",
-                    ),
-                    className="two columns",
-                    style={"float": "right", 'display':'block', 'background-color':'#f00'},
-                    ),
 
                 ], className='sentiment_div', ),
 
@@ -172,9 +160,40 @@ app.layout = html.Div([
                 ], className='sentiment_div', id='tp'),
 
                 html.Div([
-                    html.Div([],id='news_table', className='div-50'),
+                    html.Div([
+                        dash_table.DataTable(
+                                id='news_table_data',
+                                columns=[{"name":'Title',"id":'title'}, {'name':'Sentiment',"id":'sentiment'}],
+                                row_selectable='single',
+                                style_cell={
+                                    'minWidth': '0px', 'maxWidth': '80%',
+                                    'whiteSpace': 'normal',
+                                    'textAlign': 'left',
 
-                    html.Div([ ], id = 'tweet_table', className='div-50'),
+                                },
+                                css=[{
+                                    'selector': '.dash-cell div.dash-cell-value',
+                                    'rule': 'display: inline; white-space: inherit; overflow: inherit; text-overflow: inherit;'
+                                }],
+                        )
+
+                    ],id='news_table', className='div-50'),
+
+                    html.Div([dash_table.DataTable(
+                        id='tweet_table_data',
+                        columns=[{"name":'Tweet Description',"id":'message'}, {'name':'Sentiment',"id":'label'}],
+                        row_selectable='single',
+                        style_cell={
+                            'minWidth': '0px', 'maxWidth': '85%',
+                            'whiteSpace': 'normal',
+                            'textAlign': 'left',
+                        },
+                        css=[{
+                                'selector': '.dash-cell div.dash-cell-value',
+                                'rule': 'display: inline; white-space: inherit; overflow: inherit; text-overflow: inherit;'
+                             }],
+
+                        ) ], id = 'tweet_table', className='div-50'),
                 ], className='sentiment_div', ),
 
             ]),
@@ -361,7 +380,7 @@ def update_piechart(selected_dropdown_value):
     return figure
 
 
-@app.callback(Output('news_table', 'children'),
+@app.callback(Output('news_table_data', 'data'),
               [Input('my-dropdown', 'value'),
                Input('pie-chart', 'clickData'),])
 def update_news_feed(selected_dropdown_value,clickData):
@@ -374,18 +393,13 @@ def update_news_feed(selected_dropdown_value,clickData):
         sentiment = clickData['points'][0]['label']
         news_data_df = news_data_df.loc[news_data_df['sentiment'] == sentiment]
 
+    news_data_df = news_data_df.loc[:, ['title', 'sentiment']]
 
-    return html.Table(
-
-        [html.Tr([html.Td(html.Th('Title'),), html.Td(html.Th('Sentiment'), style={'width': '27%', })],
-            style={'width': '100%', 'text-align': 'center', 'background-color': '#fff' })] +
-
-        [html.Tr([html.Td([row['title']], ), html.Td([row['sentiment']], style={'width': '30%',})], ) for index,row in news_data_df.iterrows()],
-
-    style={'width': '95%', 'display': 'block', 'text-align': 'left', }, id='news_table_data')
+    return news_data_df.to_dict('records')
 
 
-@app.callback(Output('tweet_table', 'children'),
+
+@app.callback(Output('tweet_table_data', 'data'),
               [Input('my-dropdown', 'value'),
                Input('pie-chart', 'clickData'), ])
 
@@ -403,22 +417,13 @@ def update_tweet_feed(selected_dropdown_value,clickData ):
     tweet_data_df = tweet_data_df.loc[:,['message','label']]
 
     #{'name':'Tweet Description'}, {'name':'Sentiment'}
-    return dash_table.DataTable(
-                        id='tweet_table_data',
-                        columns=[{"name":'Tweet Description',"id":'message'}, {'name':'Sentiment',"id":'label'}],
-                        data=tweet_data_df.to_dict('records'),
-                        row_selectable='single',
-                        style_cell={
-                            'minWidth': '0px', 'maxWidth': '85%',
-                            'whiteSpace': 'normal',
-                            'textAlign': 'left',
-                        },
-                        css=[{
-                                'selector': '.dash-cell div.dash-cell-value',
-                                'rule': 'display: inline; white-space: inherit; overflow: inherit; text-overflow: inherit;'
-                             }],
+    return tweet_data_df.to_dict('records')
 
-                        )
+
+
+
+
+
 
 
 
