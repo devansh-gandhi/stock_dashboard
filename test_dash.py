@@ -421,6 +421,42 @@ def update_tweet_feed(selected_dropdown_value,clickData ):
 
 
 
+# hide/show modal
+@app.callback(
+    [Output("opportunities_modal", "style"),
+     Output("row_no", "children"),
+     ],
+    [Input('tweet_table_data', "data"),
+     Input('tweet_table_data',"selected_rows"),
+     Input("opportunities_modal_close", "n_clicks"),]
+)
+def display_opportunities_modal_callback(rows,selected_rows,nclicks):
+    if nclicks > 0:
+        nclicks = 0
+        return {"display": "none"}, nclicks
+    elif selected_rows:
+        #selected_list = [rows[i] for i in selected_rows]
+        dff = pd.DataFrame(rows).iloc[selected_rows]
+
+        tweet_modal_dict = es.search(index='tweets_data', body={"size": 1, "query": {"match": {"message": dff['message'].to_json() }}})
+        initial_df = pd.DataFrame.from_dict(tweet_modal_dict['hits']['hits'])
+        tweet_modal_df = pd.concat([initial_df.drop(['_source'], axis=1), initial_df['_source'].apply(pd.Series)],
+                                  axis=1)
+
+        return {"display": "block"}, html.Table(
+
+        [html.Tr([html.Td(html.Th('Tweet Description'),), html.Td(html.Th('Sentiment'), style={'width': '27%', })],
+            style={ 'text-align': 'center', })] +
+
+        [html.Tr([html.Td([row['message']], ), html.Td([row['label']], style={'width': '30%',})], style={'width': '100%',}) for index,row in tweet_modal_df.iterrows()],
+
+    style={'width': '95%', 'display': 'block', 'text-align': 'left', }, id='tweet_modal_data')
+
+    else:
+        return {"display": "none"}, []
+
+
+
 
 
 
