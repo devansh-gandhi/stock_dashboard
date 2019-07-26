@@ -130,15 +130,16 @@ app.layout = html.Div([
 
 
         dcc.Tabs(id="tabs", children=[
-            dcc.Tab(label='Overview',children=[
-                html.Div([
 
+            dcc.Tab(label='Market Sentiment Analysis', children=[
+
+                html.Div([
                     dcc.RadioItems(id='radio-div',
                         options=[
                             {'label': ' Company Name', 'value': 'CN'},
                             {'label': ' Extract', 'value': 'EX'},
                         ],
-                        value='MTL',
+                        value='CN',
                         labelStyle={'display': 'inline-block'}
                     ),
 
@@ -146,38 +147,20 @@ app.layout = html.Div([
                             options=[{'label': 'Microsoft', 'value': 'MSFT'}, {'label': 'Apple', 'value': 'AAPL'},
                                  {'label': 'Google', 'value': 'GOOG'}], value='MSFT',),
 
+                    dcc.Textarea(id='text_search', value='', placeholder='Enter a extract....', style={"display": "none"}),
+
                 ], id='my-dropdown-div'),
-
-
-            ]),
-
-            dcc.Tab(label='Technical Analysis',  children=[
-
-                html.H3('Stock Price',style={'textAlign': 'center','margin':'0px auto', 'margin-top': '5px' }),
-                dcc.Graph(id='my-graph', config={'displayModeBar': False}, ),
-
-                html.H3('Technical Indicators',style={'textAlign': 'center','margin':'0px auto', 'margin-top': '10px' }),
-
-                html.Div([
-
-                    dcc.Graph(className='indicators',id='indicators-graph', config={'displayModeBar': False}, ),
-                    dcc.Graph(className='indicators',id='indicators-ema-graph', config={'displayModeBar': False}, ),
-                    dcc.Graph(className='indicators',id='indicators-rsi-graph', config={'displayModeBar': False}, ),
-
-                ], id='sub_tab', )]),
-
-            dcc.Tab(label='Market Sentiment Analysis', children=[
 
                 html.Div([
                     html.Div([ html.H3('Sentiment Chart'), ], className='div-30'),
-                    html.Div([html.H3('Word Cloud'), ], className='div-70'),
+                    html.Div([html.H3('Stock Chart'), ], className='div-70'),
 
 
                 ], className='sentiment_div', ),
 
                 html.Div([
                     html.Div([html.Div([dcc.Graph(id='pie-chart', config={'displayModeBar': False}, ), ], className='pie-chart-div', id='pie-chart-container') ], className='div-30'),
-                    html.Div([html.Div([html.H5('Placeholder for word cloud')], className='pie-chart-div', id='word-cloud',  ) ], className='div-70' ),
+                    html.Div([html.Div([dcc.Graph(id='my-graph', config={'displayModeBar': False}, ),], className='pie-chart-div', id='word-cloud',  ) ], className='div-70' ),
 
                 ], className='sentiment_div', ),
 
@@ -192,7 +175,7 @@ app.layout = html.Div([
                     html.Div([
                         dash_table.DataTable(
                                 id='news_table_data',
-                                columns=[{"name":'Title',"id":'title'}, {'name':'Sentiment',"id":'sentiment'}],
+                                columns=[{"name":'Title',"id":'title'}],
                                 row_selectable='single',
                                 style_cell={
                                     'minWidth': '0px', 'maxWidth': '80%',
@@ -241,6 +224,20 @@ app.layout = html.Div([
 app.scripts.append_script({"external_url": ['https://code.jquery.com/jquery-3.2.1.min.js',]})
 
 
+#show hide dropdown / text field
+@app.callback(
+    [Output('my-dropdown', 'style'),
+     Output('text_search', 'style'),],
+    [Input('radio-div', 'value')])
+def display_search_field(value):
+    if value == 'EX':
+        return {"display": "none"},{"display": "block"}
+    else:
+        return {"display": "block"},{"display": "none"}
+
+
+
+
 
 @app.callback(Output('my-graph', 'figure'),
               [Input('my-dropdown', 'value')])
@@ -266,7 +263,7 @@ def update_graph(selected_dropdown_value):
     data = [val for sublist in traces for val in sublist]
     figure = {'data': data,
         'layout': go.Layout(colorway=["#5E0DAC", '#FF4F00', '#375CB1', '#FF7400', '#FFF400', '#FF0056'],
-            height=250,title=f"Opening and Closing Prices for " + dropdown[selected_dropdown_value],
+            height=200,title=f"Opening and Closing Prices for " + dropdown[selected_dropdown_value],
             xaxis={'type': 'date'},yaxis={"title":"Price (USD)"},
             margin = go.layout.Margin(l=60, r=10, b=40, t=50, ),)}
     return figure
@@ -402,7 +399,7 @@ def update_piechart(selected_dropdown_value):
         'layout': go.Layout(
             #paper_bgcolor='rgba(0,0,0,0)',
             #plot_bgcolor='rgba(0,0,0,0)'
-            height=250,legend=dict(orientation='h',yanchor='bottom',xanchor='center',y=1.2, x=0.5, ), margin=go.layout.Margin(l=10, r=10, b=10, t=10, ),
+            height=200,legend=dict(orientation='h',yanchor='bottom',xanchor='center',y=1.2, x=0.5, ), margin=go.layout.Margin(l=10, r=10, b=10, t=10, ),
     ),
     }
 
@@ -422,7 +419,7 @@ def update_news_feed(selected_dropdown_value,clickData):
         sentiment = clickData['points'][0]['label']
         news_data_df = news_data_df.loc[news_data_df['sentiment'] == sentiment]
 
-    news_data_df = news_data_df.loc[:, ['title', 'sentiment']]
+    news_data_df = news_data_df.loc[:, ['title']]
 
     return news_data_df.to_dict('records')
 

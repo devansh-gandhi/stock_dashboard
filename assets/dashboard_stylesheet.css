@@ -68,7 +68,16 @@ body, html {
 
 #my-dropdown{
 
-    display: block;
+    margin-left: auto;
+    margin-right: auto;
+    margin-top: 5px;
+    width: 100%;
+
+}
+
+
+#text_search{
+
     margin-left: auto;
     margin-right: auto;
     margin-top: 5px;
@@ -79,7 +88,7 @@ body, html {
 
     width: 90%;
     margin:0px auto;
-    margin-top: 3%;
+    margin-top: 1%;
 }
 
 
@@ -87,9 +96,9 @@ body, html {
 
     textAlign: center;
     align: center;
-    width:90%;
+    width:100%;
+    height: 30vh;
     margin: 0 auto;
-    margin-top: 10px;
     box-shadow: 1px 1px 3px 3px #b3b3b3;
 }
 
@@ -148,7 +157,7 @@ body, html {
 .pie-chart-div{
     margin: 0 auto;
     box-shadow: 1px 1px 3px 3px #b3b3b3;
-    height: 35vh;
+    height: 30vh;
     vertical-align: top;
 
 }
@@ -191,7 +200,7 @@ body, html {
 
 #news_table_data{
     border-collapse: collapse;
-    height: 35vh;
+    height: 30vh;
     overflow-y: scroll;
     margin: 0 auto;
     box-shadow: 1px 1px 3px 3px #b3b3b3;
@@ -208,7 +217,7 @@ body, html {
 
 #tweet_table_data{
     border-collapse: collapse;
-    height: 35vh;
+    height: 30vh;
     overflow-y: scroll;
     margin: 0 auto;
     box-shadow: 1px 1px 3px 3px #b3b3b3;
