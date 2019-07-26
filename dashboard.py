@@ -147,7 +147,8 @@ app.layout = html.Div([
                             options=[{'label': 'Microsoft', 'value': 'MSFT'}, {'label': 'Apple', 'value': 'AAPL'},
                                  {'label': 'Google', 'value': 'GOOG'}], value='MSFT',),
 
-                    dcc.Textarea(id='text_search', value='', placeholder='Enter a extract....', style={"display": "none"}),
+                    html.Div([dcc.Input(id='text_search', value='', placeholder='Enter a extract....', ),
+                    html.Button('Submit', id='button'),], id='extract_div',style={"display": "none"} ),
 
                 ], id='my-dropdown-div'),
 
@@ -227,7 +228,7 @@ app.scripts.append_script({"external_url": ['https://code.jquery.com/jquery-3.2.
 #show hide dropdown / text field
 @app.callback(
     [Output('my-dropdown', 'style'),
-     Output('text_search', 'style'),],
+     Output('extract_div', 'style'),],
     [Input('radio-div', 'value')])
 def display_search_field(value):
     if value == 'EX':
@@ -251,7 +252,7 @@ def update_graph(selected_dropdown_value):
     stock_data_df = pd.concat([initial_df.drop(['_source'], axis=1), initial_df['_source'].apply(pd.Series)],axis=1)
 
     stock_data_df['timestamp'] = pd.to_datetime(stock_data_df.timestamp, infer_datetime_format=True)
-
+    stock_data_df['timestamp'] = stock_data_df['timestamp'].dt.date
     trace1.append(go.Scatter(x=stock_data_df[stock_data_df["stock-symbol"] == selected_dropdown_value]["timestamp"], y=stock_data_df[stock_data_df["stock-symbol"] == selected_dropdown_value]["open"],mode='lines',
         opacity=0.7, name=f'Open', textposition='bottom center'))
     trace2.append(go.Scatter(x=stock_data_df[stock_data_df["stock-symbol"] == selected_dropdown_value]["timestamp"], y=stock_data_df[stock_data_df["stock-symbol"] == selected_dropdown_value]["close"],mode='lines',
@@ -264,129 +265,40 @@ def update_graph(selected_dropdown_value):
     figure = {'data': data,
         'layout': go.Layout(colorway=["#5E0DAC", '#FF4F00', '#375CB1', '#FF7400', '#FFF400', '#FF0056'],
             height=200,title=f"Opening and Closing Prices for " + dropdown[selected_dropdown_value],
-            xaxis={'type': 'date'},yaxis={"title":"Price (USD)"},
+            xaxis={ 'type': 'date'},yaxis={"title":"Price (USD)"},
             margin = go.layout.Margin(l=60, r=10, b=40, t=50, ),)}
     return figure
 
-@app.callback(Output('indicators-graph', 'figure'),
-              [Input('my-dropdown', 'value')])
-def update_indicator_graph(selected_dropdown_value):
-    dropdown = {"MSFT": "Microsoft", "AAPL": "Apple", "GOOG": "Google", }
-    trace1 = []
-    trace2 = []
-
-    data_dict = es.search(index='stock_data', body={"size": 50, "query": {"match": {"stock-symbol": selected_dropdown_value}}})
-    initial_df = pd.DataFrame.from_dict(data_dict['hits']['hits'])
-    stock_data_df = pd.concat([initial_df.drop(['_source'], axis=1), initial_df['_source'].apply(pd.Series)],axis=1)
-
-    stock_data_df['timestamp'] = pd.to_datetime(stock_data_df.timestamp, infer_datetime_format=True)
-
-    trace1.append(go.Scatter(x=stock_data_df[stock_data_df["stock-symbol"] == selected_dropdown_value]["timestamp"], y=stock_data_df[stock_data_df["stock-symbol"] == selected_dropdown_value]["close"],mode='lines',
-        opacity=0.7, name=f'Close', textposition='bottom center'))
-    trace2.append(go.Scatter(x=stock_data_df[stock_data_df["stock-symbol"] == selected_dropdown_value]["timestamp"], y=stock_data_df[stock_data_df["stock-symbol"] == selected_dropdown_value]["close"].rolling(window=10).mean(),mode='lines',
-        opacity=0.6 , name=f'SMA',textposition='bottom center'))
-
-    traces = [trace1, trace2]
-    data = [val for sublist in traces for val in sublist]
-    figure = {'data': data,
-        'layout': go.Layout(colorway=["#5E0DAC", '#FF4F00', '#375CB1', '#FF7400', '#FFF400', '#FF0056'],
-            height=250,title=f" Simple Moving Average (SMA)", legend_orientation="h", margin=go.layout.Margin(l=60, r=10, b=0, t=50,),
-            xaxis={'type': 'date'},yaxis={"title":"Price (USD)"})}
-    return figure
-
-@app.callback(Output('indicators-ema-graph', 'figure'),
-              [Input('my-dropdown', 'value')])
-def update_indicator_ema_graph(selected_dropdown_value):
-    dropdown = {"MSFT": "Microsoft", "AAPL": "Apple", "GOOG": "Google", }
-    trace1 = []
-    trace2 = []
-
-    data_dict = es.search(index='stock_data', body={"size": 50, "query": {"match": {"stock-symbol": selected_dropdown_value}}})
-    initial_df = pd.DataFrame.from_dict(data_dict['hits']['hits'])
-    stock_data_df = pd.concat([initial_df.drop(['_source'], axis=1), initial_df['_source'].apply(pd.Series)],axis=1)
-
-    stock_data_df['timestamp'] = pd.to_datetime(stock_data_df.timestamp, infer_datetime_format=True)
-
-    trace1.append(go.Scatter(x=stock_data_df[stock_data_df["stock-symbol"] == selected_dropdown_value]["timestamp"], y=stock_data_df[stock_data_df["stock-symbol"] == selected_dropdown_value]["close"],mode='lines',
-        opacity=0.7, name=f'Close', textposition='bottom center'))
-    trace2.append(go.Scatter(x=stock_data_df[stock_data_df["stock-symbol"] == selected_dropdown_value]["timestamp"],y=stock_data_df[stock_data_df["stock-symbol"] == selected_dropdown_value]["close"].ewm(span=10, adjust=False).mean(), mode='lines',
-        opacity=0.7, name=f'EMA', textposition='bottom center'))
-
-
-    traces = [trace1, trace2]
-    data = [val for sublist in traces for val in sublist]
-    figure = {'data': data,
-        'layout': go.Layout(colorway=["#5E0DAC", '#FF4F00', '#375CB1', '#FF7400', '#FFF400', '#FF0056'],
-            height=250,title=f" Exponential Moving Average (EMA)", legend_orientation="h", margin=go.layout.Margin(l=60, r=10, b=0, t=50,),
-            xaxis={'type': 'date'},yaxis={"title":"Price (USD)"})}
-    return figure
-
-
-@app.callback(Output('indicators-rsi-graph', 'figure'),
-              [Input('my-dropdown', 'value')])
-def update_indicator_rsi_graph(selected_dropdown_value):
-    trace1 = []
-    trace2 = []
-
-    data_dict = es.search(index='stock_data',
-                          body={"size": 50, "query": {"match": {"stock-symbol": selected_dropdown_value}}})
-    initial_df = pd.DataFrame.from_dict(data_dict['hits']['hits'])
-    stock_data_df = pd.concat([initial_df.drop(['_source'], axis=1), initial_df['_source'].apply(pd.Series)], axis=1)
-
-    stock_data_df['timestamp'] = pd.to_datetime(stock_data_df.timestamp, infer_datetime_format=True)
-
-    close = stock_data_df[stock_data_df["stock-symbol"] == selected_dropdown_value]["close"]
-
-    window_length = 10
-    delta = close.astype(float).diff()
-    delta = delta[1:]
-
-    up, down = delta.copy(), delta.copy()
-    up[up < 0] = 0
-    down[down > 0] = 0
-
-    roll_up1 = up.ewm(window_length).mean()
-    roll_down1 = down.ewm(window_length).mean().abs()
-
-    RS1 = roll_up1 / roll_down1
-    RSI1 = 100.0 - (100.0 / (1.0 + RS1))
-
-    roll_up2 = up.rolling(window_length).mean()
-    roll_down2 = down.rolling(window_length).mean().abs()
-
-    RS2 = roll_up2 / roll_down2
-    RSI2 = 100.0 - (100.0 / (1.0 + RS2))
-
-    trace1.append(go.Scatter(x=stock_data_df[stock_data_df["stock-symbol"] == selected_dropdown_value]["timestamp"],
-                             y=RSI1,
-                             mode='lines',
-                             opacity=0.7, name=f'RSI based on EMA', textposition='bottom center'))
-    trace2.append(go.Scatter(x=stock_data_df[stock_data_df["stock-symbol"] == selected_dropdown_value]["timestamp"],
-                             y= RSI2, mode='lines',
-                             opacity=0.7, name=f'RSI based on SMA', textposition='bottom center'))
-
-    traces = [trace1, trace2]
-    data = [val for sublist in traces for val in sublist]
-    figure = {'data': data,
-              'layout': go.Layout(colorway=["#5E0DAC", '#FF4F00', '#375CB1', '#FF7400', '#FFF400', '#FF0056'],
-                                  height=250, title=f" Relative Strength Index (RSI) ", legend_orientation="h",
-                                  margin=go.layout.Margin(l=60, r=10, b=0, t=50, ),
-                                  xaxis={'type': 'date'}, yaxis={"title": "Price (USD)"})}
-    return figure
-
-
 @app.callback(Output('pie-chart', 'figure'),
-              [Input('my-dropdown', 'value')])
-def update_piechart(selected_dropdown_value):
+              [Input('my-dropdown', 'value'),
+               Input('my-graph', 'clickData'),])
+def update_piechart(selected_dropdown_value,stock_clickData):
     dropdown = {"MSFT": "Microsoft", "AAPL": "Apple", "GOOG": "Google", "FB": 'Facebook'}
 
+    #fetch tweet data
     label_data_dict = es.search(index='tweets_data', body={"size": 100, "query": {"match": {"company_name": dropdown[selected_dropdown_value]}}})
     initial_df = pd.DataFrame.from_dict(label_data_dict['hits']['hits'])
     label_data_df = pd.concat([initial_df.drop(['_source'], axis=1), initial_df['_source'].apply(pd.Series)], axis=1)
 
+    #convert tweet data to timestamp
+    label_data_df['date'] = pd.to_datetime(label_data_df.date, infer_datetime_format=True)
+    label_data_df['date'] = label_data_df['date'].dt.date
+    label_data_df['date'] = pd.to_datetime(label_data_df['date'], errors='coerce')
+
+    #fetch news data
     news_data_dict = es.search(index='news_data', body={"size": 100, "query": {"match": {"company_name": dropdown[selected_dropdown_value]}}})
     initial_df = pd.DataFrame.from_dict(news_data_dict['hits']['hits'])
     news_data_df = pd.concat([initial_df.drop(['_source'], axis=1), initial_df['_source'].apply(pd.Series)], axis=1)
+
+    #convert news data to timestamp
+    news_data_df['timestamp'] = pd.to_datetime(news_data_df.timestamp, infer_datetime_format=True)
+    news_data_df['timestamp'] = news_data_df['timestamp'].dt.date
+    news_data_df['timestamp'] = pd.to_datetime(news_data_df['timestamp'], errors='coerce')
+
+    if stock_clickData:
+        date = stock_clickData['points'][0]['x']
+        news_data_df = news_data_df.loc[news_data_df['timestamp'] == date]
+        label_data_df = label_data_df.loc[label_data_df['date'] == date]
 
 
     negative = label_data_df.loc[label_data_df.label == 'Negative', 'label'].count() + news_data_df.loc[news_data_df.sentiment == 'Negative', 'sentiment'].count()
@@ -408,20 +320,29 @@ def update_piechart(selected_dropdown_value):
 
 @app.callback(Output('news_table_data', 'data'),
               [Input('my-dropdown', 'value'),
-               Input('pie-chart', 'clickData'),])
-def update_news_feed(selected_dropdown_value,clickData):
+               Input('pie-chart', 'clickData'),
+               Input('my-graph', 'clickData'),])
+def update_news_feed(selected_dropdown_value,clickData, stock_clickData):
     dropdown = {"MSFT": "Microsoft", "AAPL": "Apple", "GOOG": "Google", }
-    news_data_dict = es.search(index='news_data', body={"size": 20, "query": {"match": {"company_name": dropdown[selected_dropdown_value] }}})
+    news_data_dict = es.search(index='news_data', body={"size": 100, "query": {"match": {"company_name": dropdown[selected_dropdown_value] }}})
     initial_df = pd.DataFrame.from_dict(news_data_dict['hits']['hits'])
     news_data_df = pd.concat([initial_df.drop(['_source'], axis=1), initial_df['_source'].apply(pd.Series)], axis=1)
+
+    news_data_df['timestamp'] = pd.to_datetime(news_data_df.timestamp, infer_datetime_format=True)
+    news_data_df['timestamp'] = news_data_df['timestamp'].dt.date
+    news_data_df['timestamp'] = pd.to_datetime(news_data_df['timestamp'], errors='coerce')
 
     if clickData:
         sentiment = clickData['points'][0]['label']
         news_data_df = news_data_df.loc[news_data_df['sentiment'] == sentiment]
 
+    if stock_clickData:
+        date = stock_clickData['points'][0]['x']
+        news_data_df = news_data_df.loc[news_data_df['timestamp'] == date]
+
     news_data_df = news_data_df.loc[:, ['title']]
 
-    return news_data_df.to_dict('records')
+    return news_data_df.head(20).to_dict('records')
 
 
 
@@ -482,23 +403,31 @@ def close_modal_callback(n):
 
 @app.callback(Output('tweet_table_data', 'data'),
               [Input('my-dropdown', 'value'),
-               Input('pie-chart', 'clickData'), ])
+               Input('pie-chart', 'clickData'),
+               Input('my-graph', 'clickData'),])
 
-def update_tweet_feed(selected_dropdown_value,clickData ):
+def update_tweet_feed(selected_dropdown_value,clickData,stock_clickData ):
     dropdown = {"MSFT": "Microsoft", "AAPL": "Apple", "GOOG": "Google", "FB":'Facebook' }
-    tweet_data_dict = es.search(index='tweets_data', body={"size": 20, "query": {"match": {"company_name": dropdown[selected_dropdown_value] }}})
+    tweet_data_dict = es.search(index='tweets_data', body={"size": 100, "query": {"match": {"company_name": dropdown[selected_dropdown_value] }}})
     initial_df = pd.DataFrame.from_dict(tweet_data_dict['hits']['hits'])
     tweet_data_df = pd.concat([initial_df.drop(['_source'], axis=1), initial_df['_source'].apply(pd.Series)], axis=1)
+
+    tweet_data_df['date'] = pd.to_datetime(tweet_data_df.date, infer_datetime_format=True)
+    tweet_data_df['date'] = tweet_data_df['date'].dt.date
+    tweet_data_df['date'] = pd.to_datetime(tweet_data_df['date'], errors='coerce')
 
     if clickData:
         sentiment = clickData['points'][0]['label']
         tweet_data_df = tweet_data_df.loc[tweet_data_df['label'] == sentiment]
 
+    if stock_clickData:
+        date = stock_clickData['points'][0]['x']
+        tweet_data_df = tweet_data_df.loc[tweet_data_df['date'] == date]
 
     tweet_data_df = tweet_data_df.loc[:,['message']]
 
     #{'name':'Tweet Description'}, {'name':'Sentiment'}
-    return tweet_data_df.to_dict('records')
+    return tweet_data_df.head(20).to_dict('records')
 
 
 
