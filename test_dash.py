@@ -58,7 +58,7 @@ def modal():
                             className="row",
                             style={"borderBottom": "1px solid #C8D4E3"},
                         ),
-                        # modal form
+                        # modal data
                         html.Div(
                             [
                                 html.P(id='row_no'),
@@ -66,14 +66,8 @@ def modal():
                             className="row",
                             style={"paddingTop": "2%"},
                         ),
-                        # submit button
 
-                        html.Span(
-                            "Submit",
-                            id="submit_new_opportunity",
-                            n_clicks=0,
-                            className="button button--primary add",
-                        ),
+                        html.Div([], id='modal_close', style={'display': 'block'})
                     ],
                     className="modal-content",
                     style={"textAlign": "center"},
@@ -425,16 +419,19 @@ def update_tweet_feed(selected_dropdown_value,clickData ):
 @app.callback(
     [Output("opportunities_modal", "style"),
      Output("row_no", "children"),
+     Output("modal_close","children")
      ],
     [Input('tweet_table_data', "data"),
      Input('tweet_table_data',"selected_rows"),
      Input("opportunities_modal_close", "n_clicks"),]
 )
+
+
 def display_opportunities_modal_callback(rows,selected_rows,nclicks):
     if nclicks > 0:
-        nclicks = 0
-        return {"display": "none"}, nclicks
-    elif selected_rows:
+        #nclicks = 0
+        return {"display": "none"}, nclicks, 1
+    if selected_rows:
         #selected_list = [rows[i] for i in selected_rows]
         dff = pd.DataFrame(rows).iloc[selected_rows]
 
@@ -450,14 +447,28 @@ def display_opportunities_modal_callback(rows,selected_rows,nclicks):
 
         [html.Tr([html.Td([row['message']], ), html.Td([row['label']], style={'width': '30%',})], style={'width': '100%',}) for index,row in tweet_modal_df.iterrows()],
 
-    style={'width': '95%', 'display': 'block', 'text-align': 'left', }, id='tweet_modal_data')
+    style={'width': '95%', 'display': 'block', 'text-align': 'left', }, id='tweet_modal_data') , 0
 
     else:
-        return {"display": "none"}, []
+        return {"display": "none"}, 2 , None
 
 
 
 
+# reset to 0 add button n_clicks property
+@app.callback(
+   [ Output("opportunities_modal_close", "n_clicks"),
+        Output('tweet_table_data',"selected_rows")],
+    [
+        Input("modal_close", "children"),
+    ],
+)
+def close_modal_callback(n):
+     if n == 1:
+        return 0, None
+     else:
+         pass
+         #return [],[]
 
 
 

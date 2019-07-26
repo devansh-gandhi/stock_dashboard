@@ -216,13 +216,6 @@ body, html {
 }
 
 
-#tweet_table_data tr td{
-    border: 1px solid black;
-    padding: 5px;
-    font-size: 8pt ;
-    width: 100vh;
-}
-
 .modal {
     display: block;  /*Hidden by default */
     position: fixed; /* Stay in place */
