@@ -121,7 +121,7 @@ app.layout = html.Div([
                 html.H3('Stock Price',style={'textAlign': 'center','margin':'0px auto', 'margin-top': '5px' }),
                 dcc.Graph(id='my-graph', config={'displayModeBar': False}, ),
 
-                html.H3('Technical Indicators',style={'textAlign': 'center','margin':'0px auto', 'margin-top': '5px', 'margin-top': '10px' }),
+                html.H3('Technical Indicators',style={'textAlign': 'center','margin':'0px auto', 'margin-top': '10px' }),
 
                 html.Div([
 
@@ -141,7 +141,7 @@ app.layout = html.Div([
                 ], className='sentiment_div', ),
 
                 html.Div([
-                    html.Div([html.Div([dcc.Graph(id='pie-chart', config={'displayModeBar': False}, ), ], className='pie-chart-div') ], className='div-30'),
+                    html.Div([html.Div([dcc.Graph(id='pie-chart', config={'displayModeBar': False}, ), ], className='pie-chart-div', id='pie-chart-container') ], className='div-30'),
                     html.Div([html.Div([html.H5('Placeholder for word cloud')], className='pie-chart-div', id='word-cloud',  ) ], className='div-70' ),
 
                 ], className='sentiment_div', ),
@@ -465,6 +465,12 @@ def close_modal_callback(n):
       return 0
 
 
+#reset clickdata to none in sentiment graph
+@app.callback(
+    Output('pie-chart', 'clickData'),
+[Input('pie-chart-container', 'n_clicks')])
+def reset_clickData(n_clicks):
+    return None
 
 
 if __name__ == '__main__':
