@@ -126,7 +126,6 @@ app.layout = html.Div([
 
     html.Div([
 
-        html.H1("Stock Dashboard",style={'textAlign': 'center', 'margin': '0px', 'font-size':'20px', 'background-color': '#333333', 'color': '#fff', 'padding': '10px'  }),
 
 
         dcc.Tabs(id="tabs", children=[
@@ -264,7 +263,7 @@ def update_graph(selected_dropdown_value):
     data = [val for sublist in traces for val in sublist]
     figure = {'data': data,
         'layout': go.Layout(colorway=["#5E0DAC", '#FF4F00', '#375CB1', '#FF7400', '#FFF400', '#FF0056'],
-            height=200,title=f"Opening and Closing Prices for " + dropdown[selected_dropdown_value],
+            title=f"Opening and Closing Prices for " + dropdown[selected_dropdown_value],
             xaxis={ 'type': 'date'},yaxis={"title":"Price (USD)"},
             margin = go.layout.Margin(l=60, r=10, b=40, t=50, ),)}
     return figure
@@ -311,7 +310,7 @@ def update_piechart(selected_dropdown_value,stock_clickData):
         'layout': go.Layout(
             #paper_bgcolor='rgba(0,0,0,0)',
             #plot_bgcolor='rgba(0,0,0,0)'
-            height=200,legend=dict(orientation='h',yanchor='bottom',xanchor='center',y=1.2, x=0.5, ), margin=go.layout.Margin(l=10, r=10, b=10, t=10, ),
+           legend=dict(orientation='h',yanchor='bottom',xanchor='center',y=1.2, x=0.5, ), margin=go.layout.Margin(l=10, r=10, b=10, t=10, ),
     ),
     }
 
