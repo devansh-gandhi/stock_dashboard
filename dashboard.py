@@ -37,22 +37,13 @@ def modal():
                             [
                                 html.Span(
                                     "New Opportunity",
-                                    style={
-                                        "color": "#506784",
-                                        "fontWeight": "bold",
-                                        "fontSize": "20",
-                                    },
+                                    style={"color": "#506784","fontWeight": "bold","fontSize": "20",},
                                 ),
                                 html.Span(
                                     "×",
                                     id="opportunities_modal_close",
                                     n_clicks=0,
-                                    style={
-                                        "float": "right",
-                                        "cursor": "pointer",
-                                        "marginTop": "0",
-                                        "marginBottom": "17",
-                                    },
+                                    style={"float": "right","cursor": "pointer","marginTop": "0","marginBottom": "17",},
                                 ),
                             ],
                             className="row",
@@ -67,7 +58,7 @@ def modal():
                             style={"paddingTop": "2%"},
                         ),
 
-                        html.Div([], id='modal_close', style={'display': 'block'})
+
                     ],
                     className="modal-content",
                     style={"textAlign": "center"},
@@ -75,7 +66,51 @@ def modal():
             ],
             className="modal",
         ),
-        id="opportunities_modal",
+        id="tweet_modal",
+        style={"display": "none"},
+    )
+
+def news_modal():
+    return html.Div(
+        html.Div(
+            [
+                html.Div(
+                    [
+                        # modal header
+                        html.Div(
+                            [
+                                html.Span(
+                                    "New Opportunity",
+                                    style={"color": "#506784","fontWeight": "bold","fontSize": "20",},
+                                ),
+                                html.Span(
+                                    "×",
+                                    id="news_modal_close",
+                                    n_clicks=0,
+                                    style={"float": "right","cursor": "pointer","marginTop": "0","marginBottom": "17",},
+                                ),
+                            ],
+                            className="row",
+                            style={"borderBottom": "1px solid #C8D4E3"},
+                        ),
+                        # modal data
+                        html.Div(
+                            [
+                                html.P(id='news_modal_data'),
+                            ],
+                            className="row",
+                            style={"paddingTop": "2%"},
+                        ),
+
+
+                    ],
+                    className="modal-content",
+                    style={"textAlign": "center"},
+                )
+            ],
+           className="modal",
+        ),
+        id="news_modal",
         style={"display": "none"},
     )
 
@@ -175,7 +210,7 @@ app.layout = html.Div([
 
                     html.Div([dash_table.DataTable(
                         id='tweet_table_data',
-                        columns=[{"name":'Tweet Description',"id":'message'}, {'name':'Sentiment',"id":'label'}],
+                        columns=[{"name":'Tweet Description',"id":'message'}],
                         row_selectable='single',
                         style_cell={
                             'minWidth': '0px', 'maxWidth': '85%',
@@ -198,7 +233,7 @@ app.layout = html.Div([
         ]),
 
     ], className='right-container'),
-    modal(),
+    modal(), news_modal(),
     ], className="container")
 
 
@@ -393,6 +428,61 @@ def update_news_feed(selected_dropdown_value,clickData):
 
 
 
+
+
+# hide/show modal for news table
+@app.callback(
+    [Output("news_modal", "style"),
+     Output("news_modal_data", "children"),
+
+     ],
+    [Input('news_table_data', "data"),
+     Input('news_table_data',"selected_rows"),
+    ]
+)
+
+
+def display_news_modal_callback(rows,selected_rows):
+    if selected_rows is not 0:
+        #selected_list = [rows[i] for i in selected_rows]
+        dff = pd.DataFrame(rows).iloc[selected_rows]
+
+        news_modal_dict = es.search(index='news_data', body={"size": 1, "query": {"match": {"title": dff['title'].to_json() }}})
+        initial_df = pd.DataFrame.from_dict(news_modal_dict['hits']['hits'])
+        news_modal_df = pd.concat([initial_df.drop(['_source'], axis=1), initial_df['_source'].apply(pd.Series)],
+                                  axis=1)
+
+
+        return {"display": "block"},  html.Table(
+
+        [html.Tr([html.Td(html.Th('Title'),), html.Td(html.Th('Sentiment'), style={'width': '27%', })],
+            style={ 'text-align': 'center', })] +
+
+        [html.Tr([html.Td([row['title']], ), html.Td([row['sentiment']], style={'width': '30%',})], style={'width': '100%',}) for index,row in news_modal_df.iterrows()],
+
+    style={'width': '95%', 'display': 'block', 'text-align': 'left', }, id='news_modal_table')
+
+    else:
+        return {"display": "none"}, 2
+
+
+
+# reset to 0 add button n_clicks property for tweet table
+@app.callback(
+
+        Output('news_table_data',"selected_rows"),
+    [
+        Input("news_modal_close", "n_clicks"),
+    ],
+)
+def close_modal_callback(n):
+      return 0
+
+
+
+
+
+
 @app.callback(Output('tweet_table_data', 'data'),
               [Input('my-dropdown', 'value'),
                Input('pie-chart', 'clickData'), ])
@@ -408,26 +498,25 @@ def update_tweet_feed(selected_dropdown_value,clickData ):
         tweet_data_df = tweet_data_df.loc[tweet_data_df['label'] == sentiment]
 
 
-    tweet_data_df = tweet_data_df.loc[:,['message','label']]
+    tweet_data_df = tweet_data_df.loc[:,['message']]
 
     #{'name':'Tweet Description'}, {'name':'Sentiment'}
     return tweet_data_df.to_dict('records')
 
 
 
-# hide/show modal
+# hide/show modal for tweet table
 @app.callback(
-    [Output("opportunities_modal", "style"),
+    [Output("tweet_modal", "style"),
      Output("row_no", "children"),
-     Output("modal_close","children")
+
      ],
     [Input('tweet_table_data', "data"),
-     Input('tweet_table_data',"selected_rows"),
-     Input("opportunities_modal_close", "n_clicks"),]
+     Input('tweet_table_data',"selected_rows"),]
 )
 
 
-def display_opportunities_modal_callback(rows,selected_rows,nclicks):
+def display_tweet_modal_callback(rows,selected_rows):
     if selected_rows is not 0:
         #selected_list = [rows[i] for i in selected_rows]
         dff = pd.DataFrame(rows).iloc[selected_rows]
@@ -437,7 +526,7 @@ def display_opportunities_modal_callback(rows,selected_rows,nclicks):
         tweet_modal_df = pd.concat([initial_df.drop(['_source'], axis=1), initial_df['_source'].apply(pd.Series)],
                                   axis=1)
 
-        print(selected_rows)
+
         return {"display": "block"}, html.Table(
 
         [html.Tr([html.Td(html.Th('Tweet Description'),), html.Td(html.Th('Sentiment'), style={'width': '27%', })],
@@ -445,15 +534,15 @@ def display_opportunities_modal_callback(rows,selected_rows,nclicks):
 
         [html.Tr([html.Td([row['message']], ), html.Td([row['label']], style={'width': '30%',})], style={'width': '100%',}) for index,row in tweet_modal_df.iterrows()],
 
-    style={'width': '95%', 'display': 'block', 'text-align': 'left', }, id='tweet_modal_data') , 0
+    style={'width': '95%', 'display': 'block', 'text-align': 'left', }, id='tweet_modal_data')
 
     else:
-        return {"display": "none"}, 2 , None
+        return {"display": "none"}, 2
 
 
 
 
-# reset to 0 add button n_clicks property
+# reset to 0 add button n_clicks property for tweet table
 @app.callback(
 
         Output('tweet_table_data',"selected_rows"),
@@ -463,6 +552,13 @@ def display_opportunities_modal_callback(rows,selected_rows,nclicks):
 )
 def close_modal_callback(n):
       return 0
+
+
+
+
+
+
+
 
 
 #reset clickdata to none in sentiment graph
