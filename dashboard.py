@@ -36,8 +36,8 @@ def modal():
                         html.Div(
                             [
                                 html.Span(
-                                    "New Opportunity",
-                                    style={"color": "#506784","fontWeight": "bold","fontSize": "20",},
+                                    "Tweet",
+                                    style={"color": "#000080","fontWeight": "bold","fontSize": "20",},
                                 ),
                                 html.Span(
                                     "×",
@@ -80,8 +80,8 @@ def news_modal():
                         html.Div(
                             [
                                 html.Span(
-                                    "New Opportunity",
-                                    style={"color": "#506784","fontWeight": "bold","fontSize": "20",},
+                                    "News",
+                                    style={"color": "#000080","fontWeight": "bold","fontSize": "20",},
                                 ),
                                 html.Span(
                                     "×",
@@ -159,8 +159,8 @@ app.layout = html.Div([
                 ], className='sentiment_div', ),
 
                 html.Div([
-                    html.Div([html.Div([dcc.Graph(id='pie-chart', config={'displayModeBar': False}, ), ], className='pie-chart-div', id='pie-chart-container') ], className='div-30'),
-                    html.Div([html.Div([dcc.Graph(id='my-graph', config={'displayModeBar': False}, ),], className='pie-chart-div', id='word-cloud',  ) ], className='div-70' ),
+                    html.Div([html.Div([dcc.Graph(id='pie-chart', config={'displayModeBar': False}, ), ], className='pie-chart-div', id='pie-chart-container')], className='div-30'),
+                    html.Div([html.Div([dcc.Graph(id='my-graph', config={'displayModeBar': False}, ),], className='pie-chart-div', id='stock-price-container',)], className='div-70' ),
 
                 ], className='sentiment_div', ),
 
@@ -262,7 +262,7 @@ def update_graph(selected_dropdown_value):
     traces = [trace1, trace2]
     data = [val for sublist in traces for val in sublist]
     figure = {'data': data,
-        'layout': go.Layout(colorway=["#5E0DAC", '#FF4F00', '#375CB1', '#FF7400', '#FFF400', '#FF0056'],
+        'layout': go.Layout(colorway=["#000080", '#318af2'],
             title=f"Opening and Closing Prices for " + dropdown[selected_dropdown_value],
             xaxis={ 'type': 'date'},yaxis={"title":"Price (USD)"},
             margin = go.layout.Margin(l=60, r=10, b=40, t=50, ),)}
@@ -303,7 +303,7 @@ def update_piechart(selected_dropdown_value,stock_clickData):
     negative = label_data_df.loc[label_data_df.label == 'Negative', 'label'].count() + news_data_df.loc[news_data_df.sentiment == 'Negative', 'sentiment'].count()
     positive = label_data_df.loc[label_data_df.label == 'Positive', 'label'].count() + news_data_df.loc[news_data_df.sentiment == 'Positive', 'sentiment'].count()
 
-    data = [go.Pie(values=[positive.item(),negative.item()], labels=['Positive','Negative'])]
+    data = [go.Pie(values=[positive.item(),negative.item()], labels=['Positive','Negative'],marker={'colors': ["#000080", '#318af2']}, )]
 
     figure = {
         'data':data,
@@ -370,14 +370,17 @@ def display_news_modal_callback(rows,selected_rows):
                                   axis=1)
 
 
-        return {"display": "block"},  html.Table(
+        return {"display": "block"}, html.Div([
+            #html.Div([ news_modal_df['source'].iloc[0]], className='tweet_class' ),
+            html.Div([html.P(['Title: '], className='modal-label'),news_modal_df['title'].iloc[0]],className='tweet_class heading'),
+            html.Div([html.P(['Date: '], className='modal-label'), news_modal_df['timestamp'].iloc[0]],className='tweet_class'),
+            #html.Div([news_modal_df['urlToImage'].iloc[0]], className='tweet_class'),
+            html.Div([html.P(['Description: '], className='modal-label'),news_modal_df['description'].iloc[0]],className='tweet_class'),
+            html.Div([html.P(['Link: '], className='modal-label'),news_modal_df['url'].iloc[0]], className='tweet_class'),
+            html.Div([html.P(['Sentiment: '], className='modal-label'),news_modal_df['sentiment'].iloc[0]], className='tweet_class'),
 
-        [html.Tr([html.Td(html.Th('Title'),), html.Td(html.Th('Sentiment'), style={'width': '27%', })],
-            style={ 'text-align': 'center', })] +
+        ], id='news_modal_div' )
 
-        [html.Tr([html.Td([row['title']], ), html.Td([row['sentiment']], style={'width': '30%',})], style={'width': '100%',}) for index,row in news_modal_df.iterrows()],
-
-    style={'width': '95%', 'display': 'block', 'text-align': 'left', }, id='news_modal_table')
 
     else:
         return {"display": "none"}, 2
@@ -439,8 +442,6 @@ def update_tweet_feed(selected_dropdown_value,clickData,stock_clickData ):
     [Input('tweet_table_data', "data"),
      Input('tweet_table_data',"selected_rows"),]
 )
-
-
 def display_tweet_modal_callback(rows,selected_rows):
     if selected_rows is not 0:
         #selected_list = [rows[i] for i in selected_rows]
@@ -450,16 +451,20 @@ def display_tweet_modal_callback(rows,selected_rows):
         initial_df = pd.DataFrame.from_dict(tweet_modal_dict['hits']['hits'])
         tweet_modal_df = pd.concat([initial_df.drop(['_source'], axis=1), initial_df['_source'].apply(pd.Series)],
                                   axis=1)
+        tweet_modal_df['date'] = pd.to_datetime(tweet_modal_df.date, infer_datetime_format=True)
+        tweet_modal_df['date'] = tweet_modal_df['date'].dt.date
+        tweet_modal_df['date'] = pd.to_datetime(tweet_modal_df['date'], errors='coerce')
+
+        return {"display": "block"}, html.Div([
+            html.Div([html.P(['Author: '], className='modal-label'), tweet_modal_df['author'].iloc[0]], className='tweet_class heading' ),
+            html.Div([html.P(['Date: '],className='modal-label'), tweet_modal_df['date'].iloc[0]],className='tweet_class'),
+            html.Div([html.P(['Tweet: '], className='modal-label'), tweet_modal_df['message'].iloc[0]],className='tweet_class'),
+            html.Div([html.P(['Sentiment: '],className='modal-label'), tweet_modal_df['label'].iloc[0]],className='tweet_class'),
 
 
-        return {"display": "block"}, html.Table(
 
-        [html.Tr([html.Td(html.Th('Tweet Description'),), html.Td(html.Th('Sentiment'), style={'width': '27%', })],
-            style={ 'text-align': 'center', })] +
+        ], id='tweet_modal_div' )
 
-        [html.Tr([html.Td([row['message']], ), html.Td([row['label']], style={'width': '30%',})], style={'width': '100%',}) for index,row in tweet_modal_df.iterrows()],
-
-    style={'width': '95%', 'display': 'block', 'text-align': 'left', }, id='tweet_modal_data')
 
     else:
         return {"display": "none"}, 2
