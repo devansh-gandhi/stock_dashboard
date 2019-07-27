@@ -376,7 +376,7 @@ def display_news_modal_callback(rows,selected_rows):
             html.Div([html.P(['Date: '], className='modal-label'), news_modal_df['timestamp'].iloc[0]],className='tweet_class'),
             #html.Div([news_modal_df['urlToImage'].iloc[0]], className='tweet_class'),
             html.Div([html.P(['Description: '], className='modal-label'),news_modal_df['description'].iloc[0]],className='tweet_class'),
-            html.Div([html.P(['Link: '], className='modal-label'),news_modal_df['url'].iloc[0]], className='tweet_class'),
+            html.Div([html.P(['Link: '], className='modal-label'),html.A(news_modal_df['url'].iloc[0], href=news_modal_df['url'].iloc[0], target="_blank"), ], className='tweet_class'),
             html.Div([html.P(['Sentiment: '], className='modal-label'),news_modal_df['sentiment'].iloc[0]], className='tweet_class'),
 
         ], id='news_modal_div' )
