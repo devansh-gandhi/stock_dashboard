@@ -6,9 +6,18 @@ import dash_core_components as dcc
 import dash_html_components as html
 import pandas as pd
 import plotly.graph_objs as go
-from dash.dependencies import Input, Output
+from dash.dependencies import Input, Output, State
 import dash_table
 import json
+import pandas as pd
+import plotly as py
+import plotly.graph_objs as go
+import random
+import spacy
+from spacy import displacy
+from collections import Counter
+import en_core_web_sm
+nlp = en_core_web_sm.load()
 
 from elasticsearch import Elasticsearch
 
@@ -23,7 +32,13 @@ if 'DYNO' in os.environ:
 else:
     app_name = 'stock-timeseriesplot'
 
-
+def context_search(article):
+    doc = nlp(article)
+    ent = []
+    for X in doc:
+        if((X.ent_iob_ == "B")& (X.ent_type_== "ORG")):
+            ent.append(X.text)
+    return(Counter(ent).most_common(10)[0][0],dict(Counter(ent).most_common(10)))
 # returns modal (hidden by default)
 
 def modal():
@@ -146,8 +161,11 @@ app.layout = html.Div([
                             options=[{'label': 'Microsoft', 'value': 'MSFT'}, {'label': 'Apple', 'value': 'AAPL'},
                                  {'label': 'Google', 'value': 'GOOG'}], value='MSFT',),
 
-                    html.Div([dcc.Input(id='text_search', value='', placeholder='Enter a extract....', ),
+                    html.Div([dcc.Input(id='text_search',value = None, placeholder='Enter a extract....', ),
                     html.Button('Submit', id='button'),], id='extract_div',style={"display": "none"} ),
+
+                    html.Div([html.Div([dcc.Graph(id = 'wordcloud',style = {"display": "none"}),],id = 'wordcloud-div')],id = 'wordcloud-div1'),
+                    html.Div(id = 'test'),
 
                 ], id='my-dropdown-div'),
 
@@ -227,85 +245,126 @@ app.scripts.append_script({"external_url": ['https://code.jquery.com/jquery-3.2.
 #show hide dropdown / text field
 @app.callback(
     [Output('my-dropdown', 'style'),
-     Output('extract_div', 'style'),],
+     Output('extract_div', 'style'), 
+     Output('wordcloud-div1', 'style'),],
     [Input('radio-div', 'value')])
 def display_search_field(value):
     if value == 'EX':
-        return {"display": "none"},{"display": "block"}
+        return {"display": "none"},{"display": "block"},{"display": "block"}
     else:
-        return {"display": "block"},{"display": "none"}
+        return {"display": "block"},{"display": "none"},{"display": "none"}
 
 
+
+@app.callback(
+    Output('wordcloud', 'style'),
+    [Input('button','n_clicks')])
+def display_wordcloud_onclick(value):
+	if(value != None):
+		return {"display": "block",'height':'300px'}
+	else:
+		return {"display":'none'}
+
+@app.callback(
+    Output('wordcloud-div', 'style'),
+    [Input('button','n_clicks')])
+def display_wordcloud_onclick1(value):
+	if(value != None):
+		return {'box-shadow': '0px 0px 5px 0px rgba(0,0,0,0.2)','height':'300px','margin':'3% 0%'}
+	else:
+		return {"display":'none'}
 
 
 
 @app.callback(Output('my-graph', 'figure'),
-              [Input('my-dropdown', 'value')])
-def update_graph(selected_dropdown_value):
-    dropdown = {"MSFT": "Microsoft", "AAPL": "Apple", "GOOG": "Google", }
-    trace1 = []
-    trace2 = []
+              [Input('my-dropdown', 'value'),
+              Input('text_search','value'),
+              Input('wordcloud','clickData')])
+def update_graph(selected_dropdown_value,text_search,wordcloud_data):
+	if(text_search != None):
+		company  = context_search(text_search)
+		company = company[0]
+		dropdown1 = {"Microsoft": "MSFT", "Apple": "AAPL", "Google": "GOOG", }
+		if wordcloud_data:
+			selected_dropdown_value1 = wordcloud_data['points'][0]['text']
+		else:
+			selected_dropdown_value1 = company
+		selected_dropdown_value = dropdown1[selected_dropdown_value1]
+	else:
+		selected_dropdown_value = selected_dropdown_value
 
-    data_dict = es.search(index='stock_data', body={"size": 50, "query": {"match": {"stock-symbol": selected_dropdown_value}}})
-    initial_df = pd.DataFrame.from_dict(data_dict['hits']['hits'])
-    stock_data_df = pd.concat([initial_df.drop(['_source'], axis=1), initial_df['_source'].apply(pd.Series)],axis=1)
 
-    stock_data_df['timestamp'] = pd.to_datetime(stock_data_df.timestamp, infer_datetime_format=True)
-    stock_data_df['timestamp'] = stock_data_df['timestamp'].dt.date
-    trace1.append(go.Scatter(x=stock_data_df[stock_data_df["stock-symbol"] == selected_dropdown_value]["timestamp"], y=stock_data_df[stock_data_df["stock-symbol"] == selected_dropdown_value]["open"],mode='lines',
+	dropdown = {"MSFT": "Microsoft", "AAPL": "Apple", "GOOG": "Google", }
+	trace1 = []
+	trace2 = []
+
+	data_dict = es.search(index='stock_data', body={"size": 50, "query": {"match": {"stock-symbol": selected_dropdown_value}}})
+	initial_df = pd.DataFrame.from_dict(data_dict['hits']['hits'])
+
+	stock_data_df = pd.concat([initial_df.drop(['_source'], axis=1), initial_df['_source'].apply(pd.Series)],axis=1)
+	stock_data_df['timestamp'] = pd.to_datetime(stock_data_df.timestamp, infer_datetime_format=True)
+	stock_data_df['timestamp'] = stock_data_df['timestamp'].dt.date
+
+	trace1.append(go.Scatter(x=stock_data_df[stock_data_df["stock-symbol"] == selected_dropdown_value]["timestamp"], y=stock_data_df[stock_data_df["stock-symbol"] == selected_dropdown_value]["open"],mode='lines',
         opacity=0.7, name=f'Open', textposition='bottom center'))
-    trace2.append(go.Scatter(x=stock_data_df[stock_data_df["stock-symbol"] == selected_dropdown_value]["timestamp"], y=stock_data_df[stock_data_df["stock-symbol"] == selected_dropdown_value]["close"],mode='lines',
+
+	trace2.append(go.Scatter(x=stock_data_df[stock_data_df["stock-symbol"] == selected_dropdown_value]["timestamp"], y=stock_data_df[stock_data_df["stock-symbol"] == selected_dropdown_value]["close"],mode='lines',
         opacity=0.6 , name=f'Close',textposition='bottom center'))
 
-
-
-    traces = [trace1, trace2]
-    data = [val for sublist in traces for val in sublist]
-    figure = {'data': data,
+	traces = [trace1, trace2]
+	data = [val for sublist in traces for val in sublist]
+	figure = {'data': data,
         'layout': go.Layout(colorway=["#000080", '#318af2'],
             title=f"Opening and Closing Prices for " + dropdown[selected_dropdown_value],
             xaxis={ 'type': 'date'},yaxis={"title":"Price (USD)"},
             margin = go.layout.Margin(l=60, r=10, b=40, t=50, ),)}
-    return figure
+   
+	return figure
 
 @app.callback(Output('pie-chart', 'figure'),
               [Input('my-dropdown', 'value'),
-               Input('my-graph', 'clickData'),])
-def update_piechart(selected_dropdown_value,stock_clickData):
-    dropdown = {"MSFT": "Microsoft", "AAPL": "Apple", "GOOG": "Google", "FB": 'Facebook'}
+               Input('my-graph', 'clickData'),
+               Input('text_search','value'),
+               Input('wordcloud','clickData')])
+def update_piechart(selected_dropdown_value,stock_clickData,text_search,wordcloud_data):
+	if(text_search != None):
+		company  = context_search(text_search)
+		company = company[0]
+		if wordcloud_data:
+			selected_dropdown_value = wordcloud_data['points'][0]['text']
+		else:
+			selected_dropdown_value = company
+		label_data_dict = es.search(index='tweets_data', body={"size": 100, "query": {"match": {"company_name": selected_dropdown_value}}})
+		news_data_dict = es.search(index='news_data', body={"size": 100, "query": {"match": {"company_name": selected_dropdown_value}}})
+	else:
+		selected_dropdown_value = selected_dropdown_value
+		dropdown = {"MSFT": "Microsoft", "AAPL": "Apple", "GOOG": "Google"}
+		label_data_dict = es.search(index='tweets_data', body={"size": 100, "query": {"match": {"company_name": dropdown[selected_dropdown_value]}}})
+		news_data_dict = es.search(index='news_data', body={"size": 100, "query": {"match": {"company_name": dropdown[selected_dropdown_value]}}})
 
-    #fetch tweet data
-    label_data_dict = es.search(index='tweets_data', body={"size": 100, "query": {"match": {"company_name": dropdown[selected_dropdown_value]}}})
-    initial_df = pd.DataFrame.from_dict(label_data_dict['hits']['hits'])
-    label_data_df = pd.concat([initial_df.drop(['_source'], axis=1), initial_df['_source'].apply(pd.Series)], axis=1)
-
-    #convert tweet data to timestamp
-    label_data_df['date'] = pd.to_datetime(label_data_df.date, infer_datetime_format=True)
-    label_data_df['date'] = label_data_df['date'].dt.date
-    label_data_df['date'] = pd.to_datetime(label_data_df['date'], errors='coerce')
-
-    #fetch news data
-    news_data_dict = es.search(index='news_data', body={"size": 100, "query": {"match": {"company_name": dropdown[selected_dropdown_value]}}})
-    initial_df = pd.DataFrame.from_dict(news_data_dict['hits']['hits'])
-    news_data_df = pd.concat([initial_df.drop(['_source'], axis=1), initial_df['_source'].apply(pd.Series)], axis=1)
-
-    #convert news data to timestamp
-    news_data_df['timestamp'] = pd.to_datetime(news_data_df.timestamp, infer_datetime_format=True)
-    news_data_df['timestamp'] = news_data_df['timestamp'].dt.date
-    news_data_df['timestamp'] = pd.to_datetime(news_data_df['timestamp'], errors='coerce')
-
-    if stock_clickData:
-        date = stock_clickData['points'][0]['x']
-        news_data_df = news_data_df.loc[news_data_df['timestamp'] == date]
-        label_data_df = label_data_df.loc[label_data_df['date'] == date]
+	initial_df = pd.DataFrame.from_dict(label_data_dict['hits']['hits'])
+	label_data_df = pd.concat([initial_df.drop(['_source'], axis=1), initial_df['_source'].apply(pd.Series)], axis=1)
+	label_data_df['date'] = pd.to_datetime(label_data_df.date, infer_datetime_format=True)
+	label_data_df['date'] = label_data_df['date'].dt.date
+	label_data_df['date'] = pd.to_datetime(label_data_df['date'], errors='coerce')
 
 
-    negative = label_data_df.loc[label_data_df.label == 'Negative', 'label'].count() + news_data_df.loc[news_data_df.sentiment == 'Negative', 'sentiment'].count()
-    positive = label_data_df.loc[label_data_df.label == 'Positive', 'label'].count() + news_data_df.loc[news_data_df.sentiment == 'Positive', 'sentiment'].count()
+	
+	initial_df = pd.DataFrame.from_dict(news_data_dict['hits']['hits'])
+	news_data_df = pd.concat([initial_df.drop(['_source'], axis=1), initial_df['_source'].apply(pd.Series)], axis=1)
 
-    data = [go.Pie(values=[positive.item(),negative.item()], labels=['Positive','Negative'],marker={'colors': ["#000080", '#318af2']}, )]
+	news_data_df['timestamp'] = pd.to_datetime(news_data_df.timestamp, infer_datetime_format=True)
+	news_data_df['timestamp'] = news_data_df['timestamp'].dt.date
+	news_data_df['timestamp'] = pd.to_datetime(news_data_df['timestamp'], errors='coerce')
+	if stock_clickData:
+		date = stock_clickData['points'][0]['x']
+		news_data_df = news_data_df.loc[news_data_df['timestamp'] == date]
+		label_data_df = label_data_df.loc[label_data_df['date'] == date]
+	negative = label_data_df.loc[label_data_df.label == 'Negative', 'label'].count() + news_data_df.loc[news_data_df.sentiment == 'Negative', 'sentiment'].count()
+	positive = label_data_df.loc[label_data_df.label == 'Positive', 'label'].count() + news_data_df.loc[news_data_df.sentiment == 'Positive', 'sentiment'].count()
 
-    figure = {
+	data = [go.Pie(values=[positive.item(),negative.item()], labels=['Positive','Negative'],marker={'colors': ["#000080", '#318af2']}, )]
+	figure = {
         'data':data,
         'layout': go.Layout(
             #paper_bgcolor='rgba(0,0,0,0)',
@@ -313,35 +372,46 @@ def update_piechart(selected_dropdown_value,stock_clickData):
            legend=dict(orientation='h',yanchor='bottom',xanchor='center',y=1.2, x=0.5, ), margin=go.layout.Margin(l=10, r=10, b=10, t=10, ),
     ),
     }
-
-    return figure
+	return figure
 
 
 @app.callback(Output('news_table_data', 'data'),
               [Input('my-dropdown', 'value'),
                Input('pie-chart', 'clickData'),
-               Input('my-graph', 'clickData'),])
-def update_news_feed(selected_dropdown_value,clickData, stock_clickData):
-    dropdown = {"MSFT": "Microsoft", "AAPL": "Apple", "GOOG": "Google", }
-    news_data_dict = es.search(index='news_data', body={"size": 100, "query": {"match": {"company_name": dropdown[selected_dropdown_value] }}})
-    initial_df = pd.DataFrame.from_dict(news_data_dict['hits']['hits'])
-    news_data_df = pd.concat([initial_df.drop(['_source'], axis=1), initial_df['_source'].apply(pd.Series)], axis=1)
+               Input('my-graph', 'clickData'),
+               Input('wordcloud','clickData'),
+               Input('text_search','value')])
+def update_news_feed(selected_dropdown_value,clickData, stock_clickData,wordcloud_data,text_search):
+	if(text_search != None):
+		company  = context_search(text_search)
+		company = company[0]
+		if wordcloud_data:
+			selected_dropdown_value = wordcloud_data['points'][0]['text']
+		else:
+			selected_dropdown_value = company
+		news_data_dict = es.search(index='news_data', body={"size": 100, "query": {"match": {"company_name": selected_dropdown_value }}})
+	else:
+		selected_dropdown_value = selected_dropdown_value
+		dropdown = {"MSFT": "Microsoft", "AAPL": "Apple", "GOOG": "Google"}
+		news_data_dict = es.search(index='news_data', body={"size": 100, "query": {"match": {"company_name": dropdown[selected_dropdown_value] }}})
 
-    news_data_df['timestamp'] = pd.to_datetime(news_data_df.timestamp, infer_datetime_format=True)
-    news_data_df['timestamp'] = news_data_df['timestamp'].dt.date
-    news_data_df['timestamp'] = pd.to_datetime(news_data_df['timestamp'], errors='coerce')
+	initial_df = pd.DataFrame.from_dict(news_data_dict['hits']['hits'])
+	news_data_df = pd.concat([initial_df.drop(['_source'], axis=1), initial_df['_source'].apply(pd.Series)], axis=1)
+	news_data_df['timestamp'] = pd.to_datetime(news_data_df.timestamp, infer_datetime_format=True)
+	news_data_df['timestamp'] = news_data_df['timestamp'].dt.date
+	news_data_df['timestamp'] = pd.to_datetime(news_data_df['timestamp'], errors='coerce')
 
-    if clickData:
-        sentiment = clickData['points'][0]['label']
-        news_data_df = news_data_df.loc[news_data_df['sentiment'] == sentiment]
+	if clickData:
+		sentiment = clickData['points'][0]['label']
+		news_data_df = news_data_df.loc[news_data_df['sentiment'] == sentiment]
 
-    if stock_clickData:
-        date = stock_clickData['points'][0]['x']
-        news_data_df = news_data_df.loc[news_data_df['timestamp'] == date]
+	if stock_clickData:
+		date = stock_clickData['points'][0]['x']
+		news_data_df = news_data_df.loc[news_data_df['timestamp'] == date]
 
-    news_data_df = news_data_df.loc[:, ['title']]
+	news_data_df = news_data_df.loc[:, ['title']]
 
-    return news_data_df.head(20).to_dict('records')
+	return news_data_df.head(20).to_dict('records')
 
 
 
@@ -406,30 +476,46 @@ def close_modal_callback(n):
 @app.callback(Output('tweet_table_data', 'data'),
               [Input('my-dropdown', 'value'),
                Input('pie-chart', 'clickData'),
-               Input('my-graph', 'clickData'),])
+               Input('my-graph', 'clickData'),
+               Input('wordcloud','clickData'),
+               Input('text_search','value')])
 
-def update_tweet_feed(selected_dropdown_value,clickData,stock_clickData ):
-    dropdown = {"MSFT": "Microsoft", "AAPL": "Apple", "GOOG": "Google", "FB":'Facebook' }
-    tweet_data_dict = es.search(index='tweets_data', body={"size": 100, "query": {"match": {"company_name": dropdown[selected_dropdown_value] }}})
-    initial_df = pd.DataFrame.from_dict(tweet_data_dict['hits']['hits'])
-    tweet_data_df = pd.concat([initial_df.drop(['_source'], axis=1), initial_df['_source'].apply(pd.Series)], axis=1)
+def update_tweet_feed(selected_dropdown_value,clickData,stock_clickData,wordcloud_data,text_search ):
+	if(text_search != None):
+		company  = context_search(text_search)
+		company1 = company[0]
+		print(selected_dropdown_value)
+		if wordcloud_data:
+			selected_dropdown_value = wordcloud_data['points'][0]['text']
+		else:
+			selected_dropdown_value = company1
+		tweet_data_dict = es.search(index='tweets_data', body={"size": 100, "query": {"match": {"company_name": selected_dropdown_value }}})
+	else:
+		selected_dropdown_value = selected_dropdown_value
+		dropdown = {"MSFT": "Microsoft", "AAPL": "Apple", "GOOG": "Google", "FB":'Facebook' }
+		tweet_data_dict = es.search(index='tweets_data', body={"size": 100, "query": {"match": {"company_name": dropdown[selected_dropdown_value] }}})
 
-    tweet_data_df['date'] = pd.to_datetime(tweet_data_df.date, infer_datetime_format=True)
-    tweet_data_df['date'] = tweet_data_df['date'].dt.date
-    tweet_data_df['date'] = pd.to_datetime(tweet_data_df['date'], errors='coerce')
 
-    if clickData:
-        sentiment = clickData['points'][0]['label']
-        tweet_data_df = tweet_data_df.loc[tweet_data_df['label'] == sentiment]
+	
+	initial_df = pd.DataFrame.from_dict(tweet_data_dict['hits']['hits'])
+	tweet_data_df = pd.concat([initial_df.drop(['_source'], axis=1), initial_df['_source'].apply(pd.Series)], axis=1)
 
-    if stock_clickData:
-        date = stock_clickData['points'][0]['x']
-        tweet_data_df = tweet_data_df.loc[tweet_data_df['date'] == date]
+	tweet_data_df['date'] = pd.to_datetime(tweet_data_df.date, infer_datetime_format=True)
+	tweet_data_df['date'] = tweet_data_df['date'].dt.date
+	tweet_data_df['date'] = pd.to_datetime(tweet_data_df['date'], errors='coerce')
 
-    tweet_data_df = tweet_data_df.loc[:,['message']]
+	if clickData:
+		sentiment = clickData['points'][0]['label']
+		tweet_data_df = tweet_data_df.loc[tweet_data_df['label'] == sentiment]
 
-    #{'name':'Tweet Description'}, {'name':'Sentiment'}
-    return tweet_data_df.head(20).to_dict('records')
+	if stock_clickData:
+		date = stock_clickData['points'][0]['x']
+		tweet_data_df = tweet_data_df.loc[tweet_data_df['date'] == date]
+
+	tweet_data_df = tweet_data_df.loc[:,['message']]
+
+
+	return tweet_data_df.head(20).to_dict('records')
 
 
 
@@ -488,15 +574,48 @@ def close_modal_callback(n):
 
 
 
-
-
-
 #reset clickdata to none in sentiment graph
 @app.callback(
     Output('pie-chart', 'clickData'),
 [Input('pie-chart-container', 'n_clicks')])
 def reset_clickData(n_clicks):
     return None
+
+
+@app.callback(
+    Output('wordcloud', 'figure'),
+[Input('button', 'n_clicks')],
+[State('text_search','value')])
+def wordcloud(clicks,y):
+	x=context_search(y)
+	print(x[1])
+	words = list(x[1].keys())
+
+
+	frequency = list(x[1].values())
+
+	lower, upper = 15, 45
+	frequency = [((x - min(frequency)) / (max(frequency) - min(frequency))) * (upper - lower) + lower for x in frequency]
+
+
+	percent = [0.362086258776329, 0.13139418254764293, 0.11802072885322636, 0.055834169174189235, 0.041123370110330994, 0.03978602474088933, 0.02774991641591441, 0.02139752591106653, 0.01905717151454363, 0.015379471748579069]
+
+	lenth = len(words)
+	colors = [py.colors.DEFAULT_PLOTLY_COLORS[random.randrange(1, 10)] for i in range(lenth)]
+
+	data = go.Scatter(
+	x=[5,1,2,4,3,6,7,8,9,10],
+	y=random.choices(range(lenth), k=lenth),
+	mode='text',
+	text=words,
+	hovertext=['{0}{1}'.format(w, f) for w,f in zip(words, frequency)],
+	hoverinfo='text',
+	textfont={'size': frequency*2, 'color': colors})
+	layout = go.Layout({'xaxis': {'showgrid': False, 'showticklabels': False, 'zeroline': False},
+	                    'yaxis': {'showgrid': False, 'showticklabels': False, 'zeroline': False}})
+
+	fig = go.Figure(data=[data], layout=layout)
+	return fig
 
 
 if __name__ == '__main__':
