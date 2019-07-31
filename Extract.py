@@ -23,7 +23,8 @@ class Extract:
         company_name = self.name.lower()
         symbol = self.get_stock_symbol(company_name)
         response = requests.get(
-            'https://www.alphavantage.co/query?function=TIME_SERIES_DAILY&symbol=' + symbol + '&interval=5min&apikey=5EO00YFWTU7L1EED')
+            'https://www.alphavantage.co/query?function=TIME_SERIES_DAILY&symbol=' + symbol + '&outputsize=full&apikey=5EO00YFWTU7L1EED')
+            #'https://www.alphavantage.co/query?function=TIME_SERIES_DAILY&symbol=' + symbol + '&interval=5min&apikey=5EO00YFWTU7L1EED')
         # Print the status code of the response.
         return (response)
 

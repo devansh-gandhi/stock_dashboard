@@ -16,16 +16,17 @@ class Load:
         stock_data = self.transform.get_stock_data()
 
         for value in stock_data['Time Series (Daily)']:
-            self.es.index(index='stock_data', ignore=400, doc_type='external', body={
-                'company_name': self.company_name,
-                'stock-symbol': stock_data['Meta Data']['2. Symbol'],
-                'timestamp': value,
-                'open': stock_data['Time Series (Daily)'][value]['1. open'],
-                'high': stock_data['Time Series (Daily)'][value]['2. high'],
-                'close': stock_data['Time Series (Daily)'][value]['3. low'],
-                'low': stock_data['Time Series (Daily)'][value]['4. close'],
-                'volume': stock_data['Time Series (Daily)'][value]['5. volume']
-            })
+            if value >= '2014-01-01':
+                self.es.index(index='stock_data', ignore=400, doc_type='external', body={
+                    'company_name': self.company_name,
+                    'stock-symbol': stock_data['Meta Data']['2. Symbol'],
+                    'timestamp': value,
+                    'open': stock_data['Time Series (Daily)'][value]['1. open'],
+                    'high': stock_data['Time Series (Daily)'][value]['2. high'],
+                    'close': stock_data['Time Series (Daily)'][value]['3. low'],
+                    'low': stock_data['Time Series (Daily)'][value]['4. close'],
+                    'volume': stock_data['Time Series (Daily)'][value]['5. volume']
+                })
 
 
     def load_news_data(self):

@@ -4,9 +4,9 @@ import TwitterStream
 import os
 
 if __name__ == '__main__':
-    data = Load('Google')
+    data = Load('Microsoft')
     data.load_stock_data()
-    data.load_news_data()
+    #data.load_news_data()
     #es = Elasticsearch([{'host': 'localhost', 'port': '9200'}])
     #result = es.search(index='news_data', body={"query": {"match": {"company_name": "Apple"}}})
     #print(result)

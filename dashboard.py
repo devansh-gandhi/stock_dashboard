@@ -17,6 +17,11 @@ import spacy
 from spacy import displacy
 from collections import Counter
 import en_core_web_sm
+import numpy as np
+
+from eligibilitycheck import eligibilitycheck
+from futurepricing import generate_price_df
+
 nlp = en_core_web_sm.load()
 
 from elasticsearch import Elasticsearch
@@ -28,214 +33,252 @@ app.config.suppress_callback_exceptions = True
 es = Elasticsearch([{'host': 'localhost', 'port': '9200'}])
 
 if 'DYNO' in os.environ:
-    app_name = os.environ['DASH_APP_NAME']
+	app_name = os.environ['DASH_APP_NAME']
 else:
-    app_name = 'stock-timeseriesplot'
+	app_name = 'stock-timeseriesplot'
 
 def context_search(article):
-    doc = nlp(article)
-    ent = []
-    for X in doc:
-        if((X.ent_iob_ == "B")& (X.ent_type_== "ORG")):
-            ent.append(X.text)
-    return(Counter(ent).most_common(10)[0][0],dict(Counter(ent).most_common(10)))
+	doc = nlp(article)
+	ent = []
+	for X in doc:
+		if((X.ent_iob_ == "B")& (X.ent_type_== "ORG")):
+			ent.append(X.text)
+	return(Counter(ent).most_common(10)[0][0],dict(Counter(ent).most_common(10)))
 # returns modal (hidden by default)
 
 def modal():
-    return html.Div(
-        html.Div(
-            [
-                html.Div(
-                    [
-                        # modal header
-                        html.Div(
-                            [
-                                html.Span(
-                                    "Tweet",
-                                    style={"color": "#000080","fontWeight": "bold","fontSize": "20",},
-                                ),
-                                html.Span(
-                                    "×",
-                                    id="opportunities_modal_close",
-                                    n_clicks=0,
-                                    style={"float": "right","cursor": "pointer","marginTop": "0","marginBottom": "17",},
-                                ),
-                            ],
-                            className="row",
-                            style={"borderBottom": "1px solid #C8D4E3"},
-                        ),
-                        # modal data
-                        html.Div(
-                            [
-                                html.P(id='row_no'),
-                            ],
-                            className="row",
-                            style={"paddingTop": "2%"},
-                        ),
+	return html.Div(
+		html.Div(
+			[
+				html.Div(
+					[
+						# modal header
+						html.Div(
+							[
+								html.Span(
+									"Tweet",
+									style={"color": "#000080","fontWeight": "bold","fontSize": "20",},
+								),
+								html.Span(
+									"×",
+									id="opportunities_modal_close",
+									n_clicks=0,
+									style={"float": "right","cursor": "pointer","marginTop": "0","marginBottom": "17",},
+								),
+							],
+							className="row",
+							style={"borderBottom": "1px solid #C8D4E3"},
+						),
+						# modal data
+						html.Div(
+							[
+								html.P(id='row_no'),
+							],
+							className="row",
+							style={"paddingTop": "2%"},
+						),
 
 
-                    ],
-                    className="modal-content",
-                    style={"textAlign": "center"},
-                )
-            ],
-            className="modal",
-        ),
-        id="tweet_modal",
-        style={"display": "none"},
-    )
+					],
+					className="modal-content",
+					style={"textAlign": "center"},
+				)
+			],
+			className="modal",
+		),
+		id="tweet_modal",
+		style={"display": "none"},
+	)
 
 def news_modal():
-    return html.Div(
-        html.Div(
-            [
-                html.Div(
-                    [
-                        # modal header
-                        html.Div(
-                            [
-                                html.Span(
-                                    "News",
-                                    style={"color": "#000080","fontWeight": "bold","fontSize": "20",},
-                                ),
-                                html.Span(
-                                    "×",
-                                    id="news_modal_close",
-                                    n_clicks=0,
-                                    style={"float": "right","cursor": "pointer","marginTop": "0","marginBottom": "17",},
-                                ),
-                            ],
-                            className="row",
-                            style={"borderBottom": "1px solid #C8D4E3"},
-                        ),
-                        # modal data
-                        html.Div(
-                            [
-                                html.P(id='news_modal_data'),
-                            ],
-                            className="row",
-                            style={"paddingTop": "2%"},
-                        ),
+	return html.Div(
+		html.Div(
+			[
+				html.Div(
+					[
+						# modal header
+						html.Div(
+							[
+								html.Span(
+									"News",
+									style={"color": "#000080","fontWeight": "bold","fontSize": "20",},
+								),
+								html.Span(
+									"×",
+									id="news_modal_close",
+									n_clicks=0,
+									style={"float": "right","cursor": "pointer","marginTop": "0","marginBottom": "17",},
+								),
+							],
+							className="row",
+							style={"borderBottom": "1px solid #C8D4E3"},
+						),
+						# modal data
+						html.Div(
+                        	[
+								html.P(id='news_modal_data'),
+							],
+							className="row",
+							style={"paddingTop": "2%"},
+						),
 
 
-                    ],
-                    className="modal-content",
-                    style={"textAlign": "center"},
-                )
-            ],
-           className="modal",
-        ),
-        id="news_modal",
-        style={"display": "none"},
-    )
-
-
-
-
-
-
-
+					],
+					className="modal-content",
+					style={"textAlign": "center"},
+				)
+			],
+		   className="modal",
+		),
+		id="news_modal",
+		style={"display": "none"},
+	)
 
 
 app.layout = html.Div([
 
-    html.Div([
+	html.Div([
+
+		dcc.Tabs(id="tabs", children=[
+
+			dcc.Tab(label='Market Sentiment Analysis', children=[
+
+				html.Div([
+					dcc.RadioItems(id='radio-div',
+						options=[
+							{'label': ' Company Name', 'value': 'CN'},
+							{'label': ' Extract', 'value': 'EX'},
+						],
+						value='CN',
+						labelStyle={'display': 'inline-block'}
+					),
+
+					dcc.Dropdown(id='my-dropdown',
+							options=[{'label': 'Microsoft', 'value': 'MSFT'}, {'label': 'Apple', 'value': 'AAPL'},
+								 {'label': 'Google', 'value': 'GOOG'}], value='MSFT',),
+
+					html.Div([dcc.Input(id='text_search',value = None, placeholder='Enter a extract....', ),
+					html.Button('Submit', id='button'),], id='extract_div',style={"display": "none"} ),
+
+					html.Div([dcc.Graph(id = 'wordcloud',style = {"display": "block",}),],id = 'wordcloud-div',style = {"display": "none"}),
+					html.Div(id = 'test'),
+
+				], id='my-dropdown-div'),
+
+				html.Div([
+					html.Div([ html.H3('Sentiment Chart'), ], className='div-30'),
+					html.Div([html.H3('Stock Chart'), ], className='div-70'),
+
+
+				], className='sentiment_div', ),
+
+				html.Div([
+					html.Div([html.Div([dcc.Graph(id='pie-chart', config={'displayModeBar': False}, ), ], className='pie-chart-div', id='pie-chart-container')], className='div-30'),
+					html.Div([html.Div([dcc.Graph(id='my-graph', config={'displayModeBar': False}, ),], className='pie-chart-div', id='stock-price-container',)], className='div-70' ),
+
+				], className='sentiment_div', ),
 
 
 
-        dcc.Tabs(id="tabs", children=[
+				html.Div([
+					html.Div([html.H3('News Analysis') ], className='div-50'),
+					html.Div([html.H3('Twitter feed Analysis') ], className='div-50'),
+				], className='sentiment_div', id='tp'),
 
-            dcc.Tab(label='Market Sentiment Analysis', children=[
+				html.Div([
+					html.Div([
+						dash_table.DataTable(
+								id='news_table_data',
+								columns=[{"name":'Title',"id":'title'}],
+								row_selectable='single',
+								style_cell={
+									'minWidth': '0px', 'maxWidth': '80%',
+									'whiteSpace': 'normal',
+									'textAlign': 'left',
 
-                html.Div([
-                    dcc.RadioItems(id='radio-div',
-                        options=[
-                            {'label': ' Company Name', 'value': 'CN'},
-                            {'label': ' Extract', 'value': 'EX'},
-                        ],
-                        value='CN',
-                        labelStyle={'display': 'inline-block'}
-                    ),
+								},
+								css=[{
+									'selector': '.dash-cell div.dash-cell-value',
+									'rule': 'display: inline; white-space: inherit; overflow: inherit; text-overflow: inherit;'
+								}],
+						)
 
-                    dcc.Dropdown(id='my-dropdown',
-                            options=[{'label': 'Microsoft', 'value': 'MSFT'}, {'label': 'Apple', 'value': 'AAPL'},
-                                 {'label': 'Google', 'value': 'GOOG'}], value='MSFT',),
+					],id='news_table', className='div-50'),
 
-                    html.Div([dcc.Input(id='text_search',value = None, placeholder='Enter a extract....', ),
-                    html.Button('Submit', id='button'),], id='extract_div',style={"display": "none"} ),
+					html.Div([dash_table.DataTable(
+						id='tweet_table_data',
+						columns=[{"name":'Tweet Description',"id":'message'}],
+						row_selectable='single',
+						style_cell={
+							'minWidth': '0px', 'maxWidth': '85%',
+							'whiteSpace': 'normal',
+							'textAlign': 'left',
+						},
+						css=[{'selector': '.dash-cell div.dash-cell-value',
+							'rule': 'display: inline; white-space: inherit; overflow: inherit; text-overflow: inherit;'
+							 }],
 
-                    html.Div([html.Div([dcc.Graph(id = 'wordcloud',style = {"display": "none"}),],id = 'wordcloud-div')],id = 'wordcloud-div1'),
-                    html.Div(id = 'test'),
+						)], id ='tweet_table', className='div-50'),
+				], className='sentiment_div', ),
 
-                ], id='my-dropdown-div'),
+			]),
 
-                html.Div([
-                    html.Div([ html.H3('Sentiment Chart'), ], className='div-30'),
-                    html.Div([html.H3('Stock Chart'), ], className='div-70'),
+			dcc.Tab(label='Earnings Call Analysis', children=[
 
+				html.Div([
+					html.Div([html.H3('Buy / Sell Decision'), ], className='div-33'),
+					html.Div([html.H3('Analyst Rating'), ], className='div-33'),
+					html.Div([html.H3('Warning Flags'), ], className='div-33'),
+				], className='sentiment_div', ),
 
-                ], className='sentiment_div', ),
+				html.Div([
 
-                html.Div([
-                    html.Div([html.Div([dcc.Graph(id='pie-chart', config={'displayModeBar': False}, ), ], className='pie-chart-div', id='pie-chart-container')], className='div-30'),
-                    html.Div([html.Div([dcc.Graph(id='my-graph', config={'displayModeBar': False}, ),], className='pie-chart-div', id='stock-price-container',)], className='div-70' ),
+					html.Div([dcc.Graph(id='decision-chart', config={'displayModeBar': False}, style={'align':'center', } ), ], className='indicators',),
 
-                ], className='sentiment_div', ),
+					html.Div([html.Table(id='expected-future-price-table'),],className='indicators',),
 
+					html.Div([html.Table(id='reason-list'),],className='indicators',),
 
+				],className='sentiment_div',),
 
-                html.Div([
-                    html.Div([html.H3('News Analysis') ], className='div-50'),
-                    html.Div([html.H3('Twitter feed Analysis') ], className='div-50'),
-                ], className='sentiment_div', id='tp'),
+				html.Div([
+					html.Div([html.H3('Critical varables and Ratios'), ], className='div-40'),
+					html.Div([html.H3('Technical indicators'), ], className='div-60'),
+				], className='sentiment_div', ),
 
-                html.Div([
-                    html.Div([
-                        dash_table.DataTable(
-                                id='news_table_data',
-                                columns=[{"name":'Title',"id":'title'}],
-                                row_selectable='single',
-                                style_cell={
-                                    'minWidth': '0px', 'maxWidth': '80%',
-                                    'whiteSpace': 'normal',
-                                    'textAlign': 'left',
+				html.Div([
+					html.Div([dcc.Dropdown(id='critical-indicators-dropdown',
+							options=[{'label': 'Earnings Per Share (EPS)', 'value': 'eps'},
+								{'label': 'EPS Growth', 'value': 'epsgrowth'},
+								{'label': 'Net Income', 'value': 'netincome'},
+								{'label': 'Share Holder Equity', 'value': 'shareholderequity'},
+								{'label': 'Return on Assests (ROA)', 'value': 'roa'},
+								{'label': 'Long Term Debt', 'value': 'longtermdebt'},
+								{'label': 'Interest Expense', 'value': 'interestexpense'},
+								{'label': 'EBITDA', 'value': 'ebitda'},
+								{'label': 'Return on Equity (ROE) ', 'value': 'roe'},
+								{'label': 'Interest Coverage Ratio', 'value': 'interestcoverageratio'},
+									],searchable=False, value='eps',), ], className='div-40'),
+					html.Div([dcc.Dropdown(id='tech-indicators-dropdown',
+							options=[{'label': 'Simple Moving Average (SMA)', 'value': 'SMA'},
+									 {'label': 'Exponetial Moving Average (EMA)', 'value': 'EMA'},
+									{'label': 'Relative Strength Index (RSI)', 'value': 'RSI'},
+									],searchable=False, value='SMA',), ], className='div-60'),
+				], className='sentiment_div', ),
 
-                                },
-                                css=[{
-                                    'selector': '.dash-cell div.dash-cell-value',
-                                    'rule': 'display: inline; white-space: inherit; overflow: inherit; text-overflow: inherit;'
-                                }],
-                        )
+				html.Div([
 
-                    ],id='news_table', className='div-50'),
+					html.Div([dcc.Graph(id='critical-graph', config={'displayModeBar': False}, ),   ],className='div-40 pie-chart-div',),
+					html.Div([dcc.Graph(id='indicators-graph', config={'displayModeBar': False}, ), ], className='div-60 pie-chart-div',),
 
-                    html.Div([dash_table.DataTable(
-                        id='tweet_table_data',
-                        columns=[{"name":'Tweet Description',"id":'message'}],
-                        row_selectable='single',
-                        style_cell={
-                            'minWidth': '0px', 'maxWidth': '85%',
-                            'whiteSpace': 'normal',
-                            'textAlign': 'left',
-                        },
-                        css=[{
-                                'selector': '.dash-cell div.dash-cell-value',
-                                'rule': 'display: inline; white-space: inherit; overflow: inherit; text-overflow: inherit;'
-                             }],
+				],className='sentiment_div',),
 
-                        ) ], id = 'tweet_table', className='div-50'),
-                ], className='sentiment_div', ),
+			]),
+		]),
 
-            ]),
-
-            dcc.Tab(label='Earnings Call Analysis', children=[
-
-             ]),
-        ]),
-
-    ], className='right-container'),
-    modal(), news_modal(),
-    ], className="container")
+	], className='right-container'),
+	modal(), news_modal(),
+	], className="container")
 
 
 
@@ -244,42 +287,42 @@ app.scripts.append_script({"external_url": ['https://code.jquery.com/jquery-3.2.
 
 #show hide dropdown / text field
 @app.callback(
-    [Output('my-dropdown', 'style'),
-     Output('extract_div', 'style'), 
-     Output('wordcloud-div1', 'style'),],
-    [Input('radio-div', 'value')])
+	[Output('my-dropdown', 'style'),
+	 Output('extract_div', 'style'),],
+	[Input('radio-div', 'value')])
 def display_search_field(value):
-    if value == 'EX':
-        return {"display": "none"},{"display": "block"},{"display": "block"}
-    else:
-        return {"display": "block"},{"display": "none"},{"display": "none"}
+	if value == 'EX':
+		return {"display": "none"},{"display": "block"}
+	else:
+		return {"display": "block"},{"display": "none"}
+
 
 
 
 @app.callback(
-    Output('wordcloud', 'style'),
-    [Input('button','n_clicks')])
+	Output('wordcloud', 'style'),
+	[Input('button','n_clicks')])
 def display_wordcloud_onclick(value):
 	if(value != None):
-		return {"display": "block",'height':'300px'}
+		return {"display": "block"}
 	else:
 		return {"display":'none'}
 
 @app.callback(
-    Output('wordcloud-div', 'style'),
-    [Input('button','n_clicks')])
+	Output('wordcloud-div', 'style'),
+	[Input('button','n_clicks')])
 def display_wordcloud_onclick1(value):
 	if(value != None):
-		return {'box-shadow': '0px 0px 5px 0px rgba(0,0,0,0.2)','height':'300px','margin':'3% 0%'}
+		return {'box-shadow': '0px 0px 5px 0px rgba(0,0,0,0.2)'}
 	else:
 		return {"display":'none'}
 
 
 
 @app.callback(Output('my-graph', 'figure'),
-              [Input('my-dropdown', 'value'),
-              Input('text_search','value'),
-              Input('wordcloud','clickData')])
+			  [Input('my-dropdown', 'value'),
+			  Input('text_search','value'),
+			  Input('wordcloud','clickData')])
 def update_graph(selected_dropdown_value,text_search,wordcloud_data):
 	if(text_search != None):
 		company  = context_search(text_search)
@@ -298,6 +341,8 @@ def update_graph(selected_dropdown_value,text_search,wordcloud_data):
 	trace1 = []
 	trace2 = []
 
+	global stock_data_df
+
 	data_dict = es.search(index='stock_data', body={"size": 50, "query": {"match": {"stock-symbol": selected_dropdown_value}}})
 	initial_df = pd.DataFrame.from_dict(data_dict['hits']['hits'])
 
@@ -306,26 +351,26 @@ def update_graph(selected_dropdown_value,text_search,wordcloud_data):
 	stock_data_df['timestamp'] = stock_data_df['timestamp'].dt.date
 
 	trace1.append(go.Scatter(x=stock_data_df[stock_data_df["stock-symbol"] == selected_dropdown_value]["timestamp"], y=stock_data_df[stock_data_df["stock-symbol"] == selected_dropdown_value]["open"],mode='lines',
-        opacity=0.7, name=f'Open', textposition='bottom center'))
+		opacity=0.7, name=f'Open', textposition='bottom center'))
 
 	trace2.append(go.Scatter(x=stock_data_df[stock_data_df["stock-symbol"] == selected_dropdown_value]["timestamp"], y=stock_data_df[stock_data_df["stock-symbol"] == selected_dropdown_value]["close"],mode='lines',
-        opacity=0.6 , name=f'Close',textposition='bottom center'))
+		opacity=0.6 , name=f'Close',textposition='bottom center'))
 
 	traces = [trace1, trace2]
 	data = [val for sublist in traces for val in sublist]
 	figure = {'data': data,
-        'layout': go.Layout(colorway=["#000080", '#318af2'],
-            title=f"Opening and Closing Prices for " + dropdown[selected_dropdown_value],
-            xaxis={ 'type': 'date'},yaxis={"title":"Price (USD)"},
-            margin = go.layout.Margin(l=60, r=10, b=40, t=50, ),)}
+		'layout': go.Layout(colorway=["#000080", '#318af2'],
+			title=f"Opening and Closing Prices for " + dropdown[selected_dropdown_value],
+			xaxis={ 'type': 'date'},yaxis={"title":"Price (USD)"},
+			margin = go.layout.Margin(l=60, r=10, b=40, t=50, ),)}
    
 	return figure
 
 @app.callback(Output('pie-chart', 'figure'),
-              [Input('my-dropdown', 'value'),
-               Input('my-graph', 'clickData'),
-               Input('text_search','value'),
-               Input('wordcloud','clickData')])
+			  [Input('my-dropdown', 'value'),
+			   Input('my-graph', 'clickData'),
+			   Input('text_search','value'),
+			   Input('wordcloud','clickData')])
 def update_piechart(selected_dropdown_value,stock_clickData,text_search,wordcloud_data):
 	if(text_search != None):
 		company  = context_search(text_search)
@@ -365,22 +410,164 @@ def update_piechart(selected_dropdown_value,stock_clickData,text_search,wordclou
 
 	data = [go.Pie(values=[positive.item(),negative.item()], labels=['Positive','Negative'],marker={'colors': ["#000080", '#318af2']}, )]
 	figure = {
-        'data':data,
-        'layout': go.Layout(
-            #paper_bgcolor='rgba(0,0,0,0)',
-            #plot_bgcolor='rgba(0,0,0,0)'
-           legend=dict(orientation='h',yanchor='bottom',xanchor='center',y=1.2, x=0.5, ), margin=go.layout.Margin(l=10, r=10, b=10, t=10, ),
-    ),
-    }
+		'data':data,
+		'layout': go.Layout(
+			#paper_bgcolor='rgba(0,0,0,0)',
+			#plot_bgcolor='rgba(0,0,0,0)'
+		   legend=dict(orientation='h',yanchor='bottom',xanchor='center',y=1.2, x=0.5, ), margin=go.layout.Margin(l=10, r=10, b=10, t=10, ),
+	),
+	}
 	return figure
 
 
-@app.callback(Output('news_table_data', 'data'),
+@app.callback(Output('indicators-graph', 'figure'),
               [Input('my-dropdown', 'value'),
-               Input('pie-chart', 'clickData'),
-               Input('my-graph', 'clickData'),
-               Input('wordcloud','clickData'),
-               Input('text_search','value')])
+			   Input('tech-indicators-dropdown', 'value'),
+			   Input('text_search', 'value'),
+			   Input('wordcloud', 'clickData')])
+def update_indicator_graph(selected_dropdown_value,tech_dropdown_value,text_search,wordcloud_data):
+	if text_search is not None:
+		company = context_search(text_search)
+		company = company[0]
+		dropdown1 = {"Microsoft": "MSFT", "Apple": "AAPL", "Google": "GOOG", }
+		if wordcloud_data:
+			selected_dropdown_value1 = wordcloud_data['points'][0]['text']
+		else:
+			selected_dropdown_value1 = company
+		selected_dropdown_value = dropdown1[selected_dropdown_value1]
+	else:
+		selected_dropdown_value = selected_dropdown_value
+
+	trace1 = []
+	trace2 = []
+
+	data_dict = es.search(index='stock_data', body={"size": 50, "query": {"match": {"stock-symbol": selected_dropdown_value}}})
+	initial_df = pd.DataFrame.from_dict(data_dict['hits']['hits'])
+	stock_data_df = pd.concat([initial_df.drop(['_source'], axis=1), initial_df['_source'].apply(pd.Series)],axis=1)
+
+	stock_data_df['timestamp'] = pd.to_datetime(stock_data_df.timestamp, infer_datetime_format=True)
+
+	if tech_dropdown_value == 'SMA' or tech_dropdown_value == 'EMA':
+		trace1.append(go.Scatter(x=stock_data_df[stock_data_df["stock-symbol"] == selected_dropdown_value]["timestamp"],
+			y=stock_data_df[stock_data_df["stock-symbol"] == selected_dropdown_value]["close"],
+			mode='lines',opacity=0.7, name=f'Close', textposition='bottom center'))
+		if tech_dropdown_value == 'SMA':
+			trace2.append(go.Scatter(x=stock_data_df[stock_data_df["stock-symbol"] == selected_dropdown_value]["timestamp"], y=stock_data_df[stock_data_df["stock-symbol"] == selected_dropdown_value]["close"].rolling(window=10).mean(),mode='lines',
+			opacity=0.6 , name=f'SMA',textposition='bottom center'))
+		elif tech_dropdown_value == 'EMA':
+			trace2.append(go.Scatter(x=stock_data_df[stock_data_df["stock-symbol"] == selected_dropdown_value]["timestamp"],
+				y=stock_data_df[stock_data_df["stock-symbol"] == selected_dropdown_value]["close"].ewm(span=10,
+				adjust=False).mean(), mode='lines',opacity=0.7, name=f'EMA', textposition='bottom center'))
+
+	if tech_dropdown_value == 'RSI':
+		close = stock_data_df[stock_data_df["stock-symbol"] == selected_dropdown_value]["close"]
+
+		window_length = 10
+		delta = close.astype(float).diff()
+		delta = delta[1:]
+
+		up, down = delta.copy(), delta.copy()
+		up[up < 0] = 0
+		down[down > 0] = 0
+
+		roll_up1 = up.ewm(window_length).mean()
+		roll_down1 = down.ewm(window_length).mean().abs()
+
+		RS1 = roll_up1 / roll_down1
+		RSI1 = 100.0 - (100.0 / (1.0 + RS1))
+
+		roll_up2 = up.rolling(window_length).mean()
+		roll_down2 = down.rolling(window_length).mean().abs()
+
+		RS2 = roll_up2 / roll_down2
+		RSI2 = 100.0 - (100.0 / (1.0 + RS2))
+
+		trace1.append(go.Scatter(x=stock_data_df[stock_data_df["stock-symbol"] == selected_dropdown_value]["timestamp"],
+								 y=RSI1,
+								 mode='lines',
+								 opacity=0.7, name=f'RSI based on EMA', textposition='bottom center'))
+		trace2.append(go.Scatter(x=stock_data_df[stock_data_df["stock-symbol"] == selected_dropdown_value]["timestamp"],
+								 y=RSI2, mode='lines',
+								 opacity=0.7, name=f'RSI based on SMA', textposition='bottom center'))
+
+	traces = [trace1, trace2]
+	data = [val for sublist in traces for val in sublist]
+	figure = {'data': data,
+        'layout': go.Layout(colorway=["#000080", '#318af2'],
+            legend_orientation="h", margin=go.layout.Margin(l=60, r=10, b=0, t=5,),
+            xaxis={'type': 'date'},yaxis={"title":"Price (USD)"})}
+	return figure
+
+
+
+
+
+# for the critical variables and Ratio table
+@app.callback(Output('critical-graph', 'figure'),
+			  [Input('my-dropdown', 'value'),
+			   Input('critical-indicators-dropdown', 'value'),
+			   Input('text_search', 'value'),
+			   Input('wordcloud', 'clickData')])
+def generate_critical_graph(selected_dropdown_value,critical_dropdown_value,text_search,wordcloud_data):
+	if (text_search != None):
+		company = context_search(text_search)
+		company = company[0]
+		dropdown1 = {"Microsoft": "MSFT", "Apple": "AAPL", "Google": "GOOG", }
+		if wordcloud_data:
+			selected_dropdown_value1 = wordcloud_data['points'][0]['text']
+		else:
+			selected_dropdown_value1 = company
+		selected_dropdown_value = dropdown1[selected_dropdown_value1]
+	else:
+		selected_dropdown_value = selected_dropdown_value
+
+	financial_data_dict = es.search(index='financial_data',body={"size": 2000, "query": {"match": {"stock-symbol": selected_dropdown_value}}})
+	initial_df = pd.DataFrame.from_dict(financial_data_dict['hits']['hits'])
+	financial_data_df = pd.concat([initial_df.drop(['_source'], axis=1), initial_df['_source'].apply(pd.Series)],
+								  axis=1)
+	for i in ['netincome', 'shareholderequity', 'longtermdebt', 'interestexpense', 'ebitda']:
+		financial_data_df[i] = financial_data_df[i].astype('int64')
+
+	financial_data_df['interestcoverageratio'] = financial_data_df.ebitda / financial_data_df.interestexpense
+
+	financialreportingwritten = financial_data_df
+	financialreportingwritten[['roe', 'interestcoverageratio']] = np.round(financial_data_df[['roe', 'interestcoverageratio']], 2)
+
+	data = [go.Bar(x=financialreportingwritten['year'], y = financialreportingwritten[financialreportingwritten[critical_dropdown_value] >= 0][critical_dropdown_value], marker_color='green', name ='Positive' ),
+			go.Bar(x=financialreportingwritten['year'], y=financialreportingwritten[financialreportingwritten[critical_dropdown_value] < 0][critical_dropdown_value],marker_color='red', name='neagtive')
+			]
+	#[
+	#	{'x': [1, 2, 3], 'y': [4, 1, 2], 'type': 'bar', 'name': 'SF'},
+	#	{'x': [1, 2, 3], 'y': [2, 4, 5], 'type': 'bar', 'name': u'Montréal'},
+	#],
+
+	figure = {
+		'data': data,
+		'layout': go.Layout( xaxis={'type': 'date'},yaxis={"title":"Price (USD)"},
+			margin = go.layout.Margin(l=60, r=10, b=40, t=50, ), showlegend=False,)
+	}
+
+
+	return figure
+
+	# Header
+	#return [html.Tr([html.Th(col) for col in financialreportingwritten.columns])] + [html.Tr([
+    #    html.Td(financialreportingwritten.iloc[i][col]) for col in financialreportingwritten.columns
+    #]) for i in range(min(len(financialreportingwritten), max_rows))]
+
+
+
+
+
+
+
+
+@app.callback(Output('news_table_data', 'data'),
+			  [Input('my-dropdown', 'value'),
+			   Input('pie-chart', 'clickData'),
+			   Input('my-graph', 'clickData'),
+			   Input('wordcloud','clickData'),
+			   Input('text_search','value')])
 def update_news_feed(selected_dropdown_value,clickData, stock_clickData,wordcloud_data,text_search):
 	if(text_search != None):
 		company  = context_search(text_search)
@@ -419,66 +606,60 @@ def update_news_feed(selected_dropdown_value,clickData, stock_clickData,wordclou
 
 # hide/show modal for news table
 @app.callback(
-    [Output("news_modal", "style"),
-     Output("news_modal_data", "children"),
+	[Output("news_modal", "style"),
+	 Output("news_modal_data", "children"),
 
-     ],
-    [Input('news_table_data', "data"),
-     Input('news_table_data',"selected_rows"),
-    ]
+	 ],
+	[Input('news_table_data', "data"),
+	 Input('news_table_data',"selected_rows"),
+	]
 )
 
 
 def display_news_modal_callback(rows,selected_rows):
-    if selected_rows is not 0:
-        #selected_list = [rows[i] for i in selected_rows]
-        dff = pd.DataFrame(rows).iloc[selected_rows]
+	if selected_rows is not 0:
+		#selected_list = [rows[i] for i in selected_rows]
+		dff = pd.DataFrame(rows).iloc[selected_rows]
 
-        news_modal_dict = es.search(index='news_data', body={"size": 1, "query": {"match": {"title": dff['title'].to_json() }}})
-        initial_df = pd.DataFrame.from_dict(news_modal_dict['hits']['hits'])
-        news_modal_df = pd.concat([initial_df.drop(['_source'], axis=1), initial_df['_source'].apply(pd.Series)],
-                                  axis=1)
-
-
-        return {"display": "block"}, html.Div([
-            #html.Div([ news_modal_df['source'].iloc[0]], className='tweet_class' ),
-            html.Div([html.P(['Title: '], className='modal-label'),news_modal_df['title'].iloc[0]],className='tweet_class heading'),
-            html.Div([html.P(['Date: '], className='modal-label'), news_modal_df['timestamp'].iloc[0]],className='tweet_class'),
-            #html.Div([news_modal_df['urlToImage'].iloc[0]], className='tweet_class'),
-            html.Div([html.P(['Description: '], className='modal-label'),news_modal_df['description'].iloc[0]],className='tweet_class'),
-            html.Div([html.P(['Link: '], className='modal-label'),html.A(news_modal_df['url'].iloc[0], href=news_modal_df['url'].iloc[0], target="_blank"), ], className='tweet_class'),
-            html.Div([html.P(['Sentiment: '], className='modal-label'),news_modal_df['sentiment'].iloc[0]], className='tweet_class'),
-
-        ], id='news_modal_div' )
+		news_modal_dict = es.search(index='news_data', body={"size": 1, "query": {"match": {"title": dff['title'].to_json() }}})
+		initial_df = pd.DataFrame.from_dict(news_modal_dict['hits']['hits'])
+		news_modal_df = pd.concat([initial_df.drop(['_source'], axis=1), initial_df['_source'].apply(pd.Series)],
+								  axis=1)
 
 
-    else:
-        return {"display": "none"}, 2
+		return {"display": "block"}, html.Div([
+			#html.Div([ news_modal_df['source'].iloc[0]], className='tweet_class' ),
+			html.Div([html.P(['Title: '], className='modal-label'),news_modal_df['title'].iloc[0]],className='tweet_class heading'),
+			html.Div([html.P(['Date: '], className='modal-label'), news_modal_df['timestamp'].iloc[0]],className='tweet_class'),
+			#html.Div([news_modal_df['urlToImage'].iloc[0]], className='tweet_class'),
+			html.Div([html.P(['Description: '], className='modal-label'),news_modal_df['description'].iloc[0]],className='tweet_class'),
+			html.Div([html.P(['Link: '], className='modal-label'),html.A(news_modal_df['url'].iloc[0], href=news_modal_df['url'].iloc[0], target="_blank"), ], className='tweet_class'),
+			html.Div([html.P(['Sentiment: '], className='modal-label'),news_modal_df['sentiment'].iloc[0]], className='tweet_class'),
+
+		], id='news_modal_div' )
+
+	else:
+		return {"display": "none"}, 2
 
 
 
 # reset to 0 add button n_clicks property for tweet table
 @app.callback(
 
-        Output('news_table_data',"selected_rows"),
-    [
-        Input("news_modal_close", "n_clicks"),
-    ],
+		Output('news_table_data',"selected_rows"),
+	[
+		Input("news_modal_close", "n_clicks"),
+	],
 )
 def close_modal_callback(n):
-      return 0
-
-
-
-
-
+	return 0
 
 @app.callback(Output('tweet_table_data', 'data'),
-              [Input('my-dropdown', 'value'),
-               Input('pie-chart', 'clickData'),
-               Input('my-graph', 'clickData'),
-               Input('wordcloud','clickData'),
-               Input('text_search','value')])
+			  [Input('my-dropdown', 'value'),
+			   Input('pie-chart', 'clickData'),
+			   Input('my-graph', 'clickData'),
+			   Input('wordcloud','clickData'),
+			   Input('text_search','value')])
 
 def update_tweet_feed(selected_dropdown_value,clickData,stock_clickData,wordcloud_data,text_search ):
 	if(text_search != None):
@@ -521,39 +702,39 @@ def update_tweet_feed(selected_dropdown_value,clickData,stock_clickData,wordclou
 
 # hide/show modal for tweet table
 @app.callback(
-    [Output("tweet_modal", "style"),
-     Output("row_no", "children"),
+	[Output("tweet_modal", "style"),
+	 Output("row_no", "children"),
 
-     ],
-    [Input('tweet_table_data', "data"),
-     Input('tweet_table_data',"selected_rows"),]
+	 ],
+	[Input('tweet_table_data', "data"),
+	 Input('tweet_table_data',"selected_rows"),]
 )
 def display_tweet_modal_callback(rows,selected_rows):
-    if selected_rows is not 0:
-        #selected_list = [rows[i] for i in selected_rows]
-        dff = pd.DataFrame(rows).iloc[selected_rows]
+	if selected_rows is not 0:
+		#selected_list = [rows[i] for i in selected_rows]
+		dff = pd.DataFrame(rows).iloc[selected_rows]
 
-        tweet_modal_dict = es.search(index='tweets_data', body={"size": 1, "query": {"match": {"message": dff['message'].to_json() }}})
-        initial_df = pd.DataFrame.from_dict(tweet_modal_dict['hits']['hits'])
-        tweet_modal_df = pd.concat([initial_df.drop(['_source'], axis=1), initial_df['_source'].apply(pd.Series)],
-                                  axis=1)
-        tweet_modal_df['date'] = pd.to_datetime(tweet_modal_df.date, infer_datetime_format=True)
-        tweet_modal_df['date'] = tweet_modal_df['date'].dt.date
-        tweet_modal_df['date'] = pd.to_datetime(tweet_modal_df['date'], errors='coerce')
+		tweet_modal_dict = es.search(index='tweets_data', body={"size": 1, "query": {"match": {"message": dff['message'].to_json() }}})
+		initial_df = pd.DataFrame.from_dict(tweet_modal_dict['hits']['hits'])
+		tweet_modal_df = pd.concat([initial_df.drop(['_source'], axis=1), initial_df['_source'].apply(pd.Series)],
+								  axis=1)
+		tweet_modal_df['date'] = pd.to_datetime(tweet_modal_df.date, infer_datetime_format=True)
+		tweet_modal_df['date'] = tweet_modal_df['date'].dt.date
+		tweet_modal_df['date'] = pd.to_datetime(tweet_modal_df['date'], errors='coerce')
 
-        return {"display": "block"}, html.Div([
-            html.Div([html.P(['Author: '], className='modal-label'), tweet_modal_df['author'].iloc[0]], className='tweet_class heading' ),
-            html.Div([html.P(['Date: '],className='modal-label'), tweet_modal_df['date'].iloc[0]],className='tweet_class'),
-            html.Div([html.P(['Tweet: '], className='modal-label'), tweet_modal_df['message'].iloc[0]],className='tweet_class'),
-            html.Div([html.P(['Sentiment: '],className='modal-label'), tweet_modal_df['label'].iloc[0]],className='tweet_class'),
-
-
-
-        ], id='tweet_modal_div' )
+		return {"display": "block"}, html.Div([
+			html.Div([html.P(['Author: '], className='modal-label'), tweet_modal_df['author'].iloc[0]], className='tweet_class heading' ),
+			html.Div([html.P(['Date: '],className='modal-label'), tweet_modal_df['date'].iloc[0]],className='tweet_class'),
+			html.Div([html.P(['Tweet: '], className='modal-label'), tweet_modal_df['message'].iloc[0]],className='tweet_class'),
+			html.Div([html.P(['Sentiment: '],className='modal-label'), tweet_modal_df['label'].iloc[0]],className='tweet_class'),
 
 
-    else:
-        return {"display": "none"}, 2
+
+		], id='tweet_modal_div' )
+
+
+	else:
+		return {"display": "none"}, 2
 
 
 
@@ -561,13 +742,13 @@ def display_tweet_modal_callback(rows,selected_rows):
 # reset to 0 add button n_clicks property for tweet table
 @app.callback(
 
-        Output('tweet_table_data',"selected_rows"),
-    [
-        Input("opportunities_modal_close", "n_clicks"),
-    ],
+		Output('tweet_table_data',"selected_rows"),
+	[
+		Input("opportunities_modal_close", "n_clicks"),
+	],
 )
 def close_modal_callback(n):
-      return 0
+	  return 0
 
 
 
@@ -576,14 +757,14 @@ def close_modal_callback(n):
 
 #reset clickdata to none in sentiment graph
 @app.callback(
-    Output('pie-chart', 'clickData'),
+	Output('pie-chart', 'clickData'),
 [Input('pie-chart-container', 'n_clicks')])
 def reset_clickData(n_clicks):
-    return None
+	return None
 
 
 @app.callback(
-    Output('wordcloud', 'figure'),
+	Output('wordcloud', 'figure'),
 [Input('button', 'n_clicks')],
 [State('text_search','value')])
 def wordcloud(clicks,y):
@@ -612,11 +793,119 @@ def wordcloud(clicks,y):
 	hoverinfo='text',
 	textfont={'size': frequency*2, 'color': colors})
 	layout = go.Layout({'xaxis': {'showgrid': False, 'showticklabels': False, 'zeroline': False},
-	                    'yaxis': {'showgrid': False, 'showticklabels': False, 'zeroline': False}})
+						'yaxis': {'showgrid': False, 'showticklabels': False, 'zeroline': False},
+						}, margin = go.layout.Margin(l=20, r=10, b=40, t=10, ), )
 
-	fig = go.Figure(data=[data], layout=layout)
+	fig = go.Figure(data=[data], layout=layout,)
 	return fig
 
 
+
+
+# for the reason-list
+@app.callback(Output('reason-list', 'children'), [Input('my-dropdown', 'value')])
+def generate_reason_list(selected_dropdown_value):
+	global financial_data_df  # Needed to modify global copy of financialreportingdf
+
+	financial_data_dict = es.search(index='financial_data',
+									body={"size": 2000, "query": {"match": {"stock-symbol": selected_dropdown_value}}})
+	initial_df = pd.DataFrame.from_dict(financial_data_dict['hits']['hits'])
+	financial_data_df = pd.concat([initial_df.drop(['_source'], axis=1), initial_df['_source'].apply(pd.Series)],
+								  axis=1)
+	for i in ['netincome', 'shareholderequity', 'longtermdebt', 'interestexpense', 'ebitda']:
+		financial_data_df[i] = financial_data_df[i].astype('int64')
+
+	financial_data_df['interestcoverageratio'] = financial_data_df.ebitda / financial_data_df.interestexpense
+
+	#financialreportingdf = getfinancialreportingdfformatted(selected_dropdown_value.strip().lower()).reset_index()
+	reasonlist = eligibilitycheck(selected_dropdown_value.strip().lower(), financial_data_df)
+	# print(financialreportingdf)
+	# Header
+	return [html.Tr(html.Td(reason)) for reason in reasonlist]
+
+
+
+# for the expected-future-price-table
+@app.callback(
+		[Output('expected-future-price-table1', 'children'),
+		 Output('decision-chart', 'figure'),],
+		[Input('my-dropdown', 'value'),
+		Input('text_search', 'value'),
+	   	Input('wordcloud', 'clickData')])
+def generate_future_price_table(selected_dropdown_value,text_search,wordcloud_data, max_rows=10):
+	global stock_data_df
+	global financial_data_df
+
+	financial_data_dict = es.search(index='financial_data',
+									body={"size": 2000, "query": {"match": {"stock-symbol": selected_dropdown_value}}})
+	initial_df = pd.DataFrame.from_dict(financial_data_dict['hits']['hits'])
+	financial_data_df = pd.concat([initial_df.drop(['_source'], axis=1), initial_df['_source'].apply(pd.Series)],
+								  axis=1)
+	for i in ['netincome', 'shareholderequity', 'longtermdebt', 'interestexpense', 'ebitda']:
+		financial_data_df[i] = financial_data_df[i].astype('int64')
+
+	data_dict = es.search(index='stock_data',
+						  body={"size": 2000, "query": {"match": {"stock-symbol": selected_dropdown_value}}})
+	initial_df = pd.DataFrame.from_dict(data_dict['hits']['hits'])
+
+	stock_data_df = pd.concat([initial_df.drop(['_source'], axis=1), initial_df['_source'].apply(pd.Series)], axis=1)
+	stock_data_df['timestamp'] = pd.to_datetime(stock_data_df.timestamp, infer_datetime_format=True)
+	stock_data_df['timestamp'] = stock_data_df['timestamp'].dt.date
+
+	pricedf = generate_price_df(selected_dropdown_value.strip(), financial_data_df, stock_data_df, 0.15,0.15)
+
+	data = [go.Pie(
+		values=[50, 10, 10, 10, 10, 10],
+		labels=["Recommendation", "Strong Sell", "Moderate Sell", "Hold", "Moderate Buy", "Strong Buy"],
+		domain={"x": [0, .8]},
+		marker_colors=[
+			'rgb(255, 255, 255)',
+			'rgb(255,0,0)',
+			'rgb(255, 77, 77)',
+			'rgb(223,189,139)',
+			'rgb(50,205,50)',
+			'rgb(0,128,0)'
+		],
+		name="Gauge",
+		hole=.3,
+		direction="clockwise",
+		rotation=90,
+		showlegend=False,
+		hoverinfo="none",
+		textinfo="label",
+		textposition="inside"
+	)]
+
+	if pricedf.decision[0] == 'SSELL':
+		path = 'M 0.395 0.5 L 0.30 0.545 L 0.405 0.5 Z'
+	elif pricedf.decision[0] == 'SELL':
+		path = 'M 0.395 0.5 L 0.325 0.615 L 0.405 0.5 Z'
+	elif pricedf.decision[0] == 'HOLD':
+		path = 'M 0.395 0.5 L 0.4 0.65  L 0.405 0.5 Z'
+	elif pricedf.decision[0] == 'BUY':
+		path = 'M 0.395 0.5 L 0.48 0.615 L 0.405 0.5 Z'
+	elif pricedf.decision[0] == 'SBUY':
+		path = 'M 0.395 0.5 L 0.50 0.545 L 0.405 0.5 Z'
+	figure = {
+		'data': data,
+		'layout': go.Layout(
+			# paper_bgcolor='rgba(0,0,0,0)',
+			# plot_bgcolor='rgba(0,0,0,0)'
+			shapes=[
+				dict(type='path', path=path, fillcolor='rgba(44, 160, 101, 0.5)',
+					 line_width=0.5, xref='paper', yref='paper')],
+
+			margin=go.layout.Margin(l=30, r=0, b=0, t=20, ),
+		),
+	}
+
+
+	# Header
+	return [html.Tr([html.Th(col) for col in pricedf.columns])] + [html.Tr([
+		html.Td(html.B(pricedf.iloc[i][col])) if col == 'decision' else html.Td(round(pricedf.iloc[i][col], 2))
+		for col in pricedf.columns
+	]) for i in range(min(len(pricedf), max_rows))], figure
+
+
 if __name__ == '__main__':
-    app.run_server(debug=False)
+	app.run_server(debug=False)
