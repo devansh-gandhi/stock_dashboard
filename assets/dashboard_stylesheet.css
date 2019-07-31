@@ -389,3 +389,21 @@ body, html {
     font-weight: bold;
     color: #404040;
 }
+
+
+
+#expected-future-price-table{
+     border-collapse: collapse;
+    height: 50px;
+    margin: 0 auto;
+    box-shadow: 1px 1px 3px 3px #b3b3b3;
+    width: 100%;
+}
+
+#expected-future-price-table tr td{
+    border: 1px solid black;
+    padding: 5px;
+    font-size: 8pt ;
+    width: 80%;
+
+}

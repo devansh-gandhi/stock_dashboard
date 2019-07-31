@@ -44,8 +44,8 @@ def context_search(article):
 		if((X.ent_iob_ == "B")& (X.ent_type_== "ORG")):
 			ent.append(X.text)
 	return(Counter(ent).most_common(10)[0][0],dict(Counter(ent).most_common(10)))
-# returns modal (hidden by default)
 
+# returns modal (hidden by default)
 def modal():
 	return html.Div(
 		html.Div(
@@ -73,6 +73,7 @@ def modal():
 						html.Div(
 							[
 								html.P(id='row_no'),
+								#html.P(id='news_modal_data'),
 							],
 							className="row",
 							style={"paddingTop": "2%"},
@@ -93,47 +94,46 @@ def modal():
 def news_modal():
 	return html.Div(
 		html.Div(
-			[
-				html.Div(
-					[
-						# modal header
-						html.Div(
-							[
-								html.Span(
-									"News",
-									style={"color": "#000080","fontWeight": "bold","fontSize": "20",},
-								),
-								html.Span(
-									"×",
-									id="news_modal_close",
-									n_clicks=0,
-									style={"float": "right","cursor": "pointer","marginTop": "0","marginBottom": "17",},
-								),
-							],
-							className="row",
-							style={"borderBottom": "1px solid #C8D4E3"},
-						),
-						# modal data
-						html.Div(
-                        	[
-								html.P(id='news_modal_data'),
-							],
-							className="row",
-							style={"paddingTop": "2%"},
-						),
+			[html.Div(
+				[# modal header
+					html.Div(
+						[
+							html.Span("News",style={"color": "#000080","fontWeight": "bold","fontSize": "20",},),
+							html.Span("×",id="news_modal_close",n_clicks=0,
+								style={"float": "right","cursor": "pointer","marginTop": "0","marginBottom": "17",},
+							),
+						],
+						className="row",style={"borderBottom": "1px solid #C8D4E3"},
+					),
+					# modal data
+					html.Div([html.P(id='news_modal_data'),],className="row",style={"paddingTop": "2%"},),
 
-
-					],
-					className="modal-content",
-					style={"textAlign": "center"},
-				)
-			],
-		   className="modal",
-		),
-		id="news_modal",
-		style={"display": "none"},
+				],className="modal-content",style={"textAlign": "center"},)
+			],className="modal",
+		),id="news_modal",style={"display": "none"},
 	)
 
+def critical_table_modal():
+	return html.Div(
+		html.Div(
+			[html.Div(
+				[# modal header
+					html.Div(
+						[
+							html.Span("Critical Values and Ratios",style={"color": "#000080","fontWeight": "bold","fontSize": "20",},),
+							html.Span("×",id="critical_modal_close",n_clicks=0,
+								style={"float": "right","cursor": "pointer","marginTop": "0","marginBottom": "17",},
+							),
+						],
+						className="row",style={"borderBottom": "1px solid #C8D4E3"},
+					),
+					# modal data
+					html.Div([html.P(id='critical_modal_data'),],className="row",style={"paddingTop": "2%"},),
+
+				],className="modal-content",style={"textAlign": "center"},)
+			],className="modal",
+		),id="critical_modal",style={"display": "none"},
+	)
 
 app.layout = html.Div([
 
@@ -233,10 +233,10 @@ app.layout = html.Div([
 
 				html.Div([
 
-					html.Div([dcc.Graph(id='decision-chart', config={'displayModeBar': False}, style={'align':'center', } ), ], className='indicators',),
+					html.Div([dcc.Graph(id='decision-chart', config={'displayModeBar': False}, style={'align':'center', } ), ], id='decision-chart-div',className='indicators',),
 
-					html.Div([html.Table(id='expected-future-price-table'),],className='indicators',),
-
+					html.Div([html.Table(id='expected-future-price-table',style={'display':'none'}),],),
+					html.Div(['ss'],style={'display':'block'}, className='indicators',),
 					html.Div([html.Table(id='reason-list'),],className='indicators',),
 
 				],className='sentiment_div',),
@@ -277,7 +277,7 @@ app.layout = html.Div([
 		]),
 
 	], className='right-container'),
-	modal(), news_modal(),
+	modal(), news_modal(), critical_table_modal(),
 	], className="container")
 
 
@@ -752,9 +752,6 @@ def close_modal_callback(n):
 
 
 
-
-
-
 #reset clickdata to none in sentiment graph
 @app.callback(
 	Output('pie-chart', 'clickData'),
@@ -827,7 +824,7 @@ def generate_reason_list(selected_dropdown_value):
 
 # for the expected-future-price-table
 @app.callback(
-		[Output('expected-future-price-table1', 'children'),
+		[Output('expected-future-price-table', 'children'),
 		 Output('decision-chart', 'figure'),],
 		[Input('my-dropdown', 'value'),
 		Input('text_search', 'value'),
@@ -905,6 +902,27 @@ def generate_future_price_table(selected_dropdown_value,text_search,wordcloud_da
 		html.Td(html.B(pricedf.iloc[i][col])) if col == 'decision' else html.Td(round(pricedf.iloc[i][col], 2))
 		for col in pricedf.columns
 	]) for i in range(min(len(pricedf), max_rows))], figure
+
+
+
+@app.callback(
+		[Output('critical_modal', 'style'),
+		 Output('critical_modal_data', 'children'), ],
+		 [Input('decision-chart', 'clickData'),],
+		[State('expected-future-price-table', 'children'),])
+def generate_future_price_table(clickData, pricetable , max_rows=10):
+	if clickData is not 0:
+		return {"display": "block"}, pricetable
+	else:
+		return {"display": "none"}, pricetable
+
+
+#reset clickdata to none in sentiment graph
+@app.callback(
+	Output('decision-chart', 'clickData'),
+[Input("critical_modal_close", "n_clicks")])
+def reset_clickData(n_clicks):
+	return 0
 
 
 if __name__ == '__main__':
