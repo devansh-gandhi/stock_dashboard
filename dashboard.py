@@ -49,46 +49,23 @@ def context_search(article):
 def modal():
 	return html.Div(
 		html.Div(
-			[
-				html.Div(
-					[
-						# modal header
+			[html.Div(
+					[# modal header
 						html.Div(
 							[
-								html.Span(
-									"Tweet",
-									style={"color": "#000080","fontWeight": "bold","fontSize": "20",},
-								),
-								html.Span(
-									"×",
-									id="opportunities_modal_close",
-									n_clicks=0,
+								html.Span("Tweet",style={"color": "#000080","fontWeight": "bold","fontSize": "20",},),
+								html.Span("×",id="opportunities_modal_close",n_clicks=0,
 									style={"float": "right","cursor": "pointer","marginTop": "0","marginBottom": "17",},
 								),
 							],
-							className="row",
-							style={"borderBottom": "1px solid #C8D4E3"},
+							className="row",style={"borderBottom": "1px solid #C8D4E3"},
 						),
 						# modal data
-						html.Div(
-							[
-								html.P(id='row_no'),
-								#html.P(id='news_modal_data'),
-							],
-							className="row",
-							style={"paddingTop": "2%"},
-						),
+						html.Div([html.P(id='row_no'),],className="row",style={"paddingTop": "2%"},),
 
-
-					],
-					className="modal-content",
-					style={"textAlign": "center"},
-				)
-			],
-			className="modal",
-		),
-		id="tweet_modal",
-		style={"display": "none"},
+					],className="modal-content",style={"textAlign": "center"},)
+			],className="modal",
+		),id="tweet_modal",style={"display": "none"},
 	)
 
 def news_modal():
@@ -183,7 +160,7 @@ app.layout = html.Div([
 				html.Div([
 					html.Div([html.H3('News Analysis') ], className='div-50'),
 					html.Div([html.H3('Twitter feed Analysis') ], className='div-50'),
-				], className='sentiment_div', id='tp'),
+				], className='sentiment_div'),
 
 				html.Div([
 					html.Div([
@@ -221,7 +198,7 @@ app.layout = html.Div([
 						)], id ='tweet_table', className='div-50'),
 				], className='sentiment_div', ),
 
-			]),
+				]),
 
 			dcc.Tab(label='Earnings Call Analysis', children=[
 
@@ -236,7 +213,10 @@ app.layout = html.Div([
 					html.Div([dcc.Graph(id='decision-chart', config={'displayModeBar': False}, style={'align':'center', } ), ], id='decision-chart-div',className='indicators',),
 
 					html.Div([html.Table(id='expected-future-price-table',style={'display':'none'}),],),
-					html.Div(['ss'],style={'display':'block'}, className='indicators',),
+					html.Div([html.Div([html.Button('Current', id='current-button',n_clicks_timestamp=0, className='div-30 button'),
+								html.Button('1 Month Ago', id='one_month',n_clicks_timestamp=0, className='div-30 button'),
+								html.Button('3 Month Ago', id='three_month',n_clicks_timestamp=0, className='div-30 button'),], className='buttons-container' ),
+							  dcc.Graph(id='analyst-chart', config={'displayModeBar': False}, style={'align':'center', } ), ],style={'display':'block'}, className='indicators',),
 					html.Div([html.Table(id='reason-list'),],className='indicators',),
 
 				],className='sentiment_div',),
@@ -502,7 +482,7 @@ def update_indicator_graph(selected_dropdown_value,tech_dropdown_value,text_sear
 
 
 
-# for the critical variables and Ratio table
+# for the critical variables and Ratio graph
 @app.callback(Output('critical-graph', 'figure'),
 			  [Input('my-dropdown', 'value'),
 			   Input('critical-indicators-dropdown', 'value'),
@@ -550,15 +530,56 @@ def generate_critical_graph(selected_dropdown_value,critical_dropdown_value,text
 
 	return figure
 
-	# Header
-	#return [html.Tr([html.Th(col) for col in financialreportingwritten.columns])] + [html.Tr([
-    #    html.Td(financialreportingwritten.iloc[i][col]) for col in financialreportingwritten.columns
-    #]) for i in range(min(len(financialreportingwritten), max_rows))]
+
+# for the Analyst Rating graph
+@app.callback(Output('analyst-chart', 'figure'),
+				[Input('my-dropdown', 'value'),
+				Input('current-button', 'n_clicks_timestamp'),
+				Input('one_month', 'n_clicks_timestamp'),
+				Input('three_month', 'n_clicks_timestamp'),
+				Input('text_search', 'value'),
+				Input('wordcloud', 'clickData')])
+def generate_analyst_graph(selected_dropdown_value,current,one_month,three_month,text_search,wordcloud_data):
+	if (text_search != None):
+		company = context_search(text_search)
+		company = company[0]
+		dropdown1 = {"Microsoft": "MSFT", "Apple": "AAPL", "Google": "GOOG", }
+		if wordcloud_data:
+			selected_dropdown_value1 = wordcloud_data['points'][0]['text']
+		else:
+			selected_dropdown_value1 = company
+		selected_dropdown_value = dropdown1[selected_dropdown_value1]
+	else:
+		selected_dropdown_value = selected_dropdown_value
+
+	analyst_data_dict = es.search(index='analyst_data',
+									body={"size": 2000, "query": {"match": {"stock-symbol": selected_dropdown_value}}})
+	initial_df = pd.DataFrame.from_dict(analyst_data_dict['hits']['hits'])
+	analyst_data_df = pd.concat([initial_df.drop(['_source'], axis=1), initial_df['_source'].apply(pd.Series)],
+								  axis=1)
+	if int(current) > int(one_month) and int(current) > int(three_month):
+		analyst_data_df = analyst_data_df[analyst_data_df['duration'] == 'current']
+	elif int(one_month) > int(current) and int(one_month) > int(three_month) :
+		analyst_data_df = analyst_data_df[analyst_data_df['duration'] == 'one_month']
+	elif int(three_month) > int(current) and int(three_month) > int(one_month):
+		analyst_data_df = analyst_data_df[analyst_data_df['duration'] == 'three_month']
+	else:
+		analyst_data_df = analyst_data_df[analyst_data_df['duration'] == 'current']
+
+	data = [go.Bar(x=analyst_data_df[['buy', 'overweight', 'hold', 'underweight', 'sell']].values.tolist()[0],
+				   y=['Buy', 'Overweight', 'Hold', 'Underweight', 'Sell'],orientation='h',
+				   marker = dict(color=['#008000', '#32cd32', '#dfbd8b', '#ff4d4d', "#ff0000"]),),
+			]
+
+	title ='Current Analyst Rating'
+	figure = {
+		'data': data,
+		'layout': go.Layout(title= title ,
+							margin=go.layout.Margin(l=80, r=40, b=30, t=30, ), showlegend=False, )
+	}
 
 
-
-
-
+	return figure
 
 
 
@@ -614,8 +635,6 @@ def update_news_feed(selected_dropdown_value,clickData, stock_clickData,wordclou
 	 Input('news_table_data',"selected_rows"),
 	]
 )
-
-
 def display_news_modal_callback(rows,selected_rows):
 	if selected_rows is not 0:
 		#selected_list = [rows[i] for i in selected_rows]
@@ -853,7 +872,7 @@ def generate_future_price_table(selected_dropdown_value,text_search,wordcloud_da
 
 	data = [go.Pie(
 		values=[50, 10, 10, 10, 10, 10],
-		labels=["Recommendation", "Strong Sell", "Moderate Sell", "Hold", "Moderate Buy", "Strong Buy"],
+		labels=["Recommendation", "Sell", "Underweight", "Hold", "Overweight", "Buy"],
 		domain={"x": [0, .8]},
 		marker_colors=[
 			'rgb(255, 255, 255)',
@@ -873,15 +892,15 @@ def generate_future_price_table(selected_dropdown_value,text_search,wordcloud_da
 		textposition="inside"
 	)]
 
-	if pricedf.decision[0] == 'SSELL':
+	if pricedf.decision[0] == 'SELL':
 		path = 'M 0.395 0.5 L 0.30 0.545 L 0.405 0.5 Z'
-	elif pricedf.decision[0] == 'SELL':
+	elif pricedf.decision[0] == 'UNDERWEIGHT':
 		path = 'M 0.395 0.5 L 0.325 0.615 L 0.405 0.5 Z'
 	elif pricedf.decision[0] == 'HOLD':
 		path = 'M 0.395 0.5 L 0.4 0.65  L 0.405 0.5 Z'
-	elif pricedf.decision[0] == 'BUY':
+	elif pricedf.decision[0] == 'OVERWEIGHT':
 		path = 'M 0.395 0.5 L 0.48 0.615 L 0.405 0.5 Z'
-	elif pricedf.decision[0] == 'SBUY':
+	elif pricedf.decision[0] == 'BUY':
 		path = 'M 0.395 0.5 L 0.50 0.545 L 0.405 0.5 Z'
 	figure = {
 		'data': data,

@@ -58,15 +58,15 @@ def generate_price_df(ticker,financialreportingdf,stockpricedf,discountrate,marg
 	difference = dfprice['marginprice'] - dfprice['lastshareprice']
 
 	if difference[0] < -50:
-		dfprice['decision'] = 'SSELL'
-	elif difference[0] < -20 and difference[0] >= -50:
 		dfprice['decision'] = 'SELL'
+	elif difference[0] < -20 and difference[0] >= -50:
+		dfprice['decision'] = 'UNDERWEIGHT'
 	elif difference[0] < 20 and  difference[0] >= -20:
 		dfprice['decision'] = 'HOLD'
 	elif difference[0] < 50 and  difference[0] >= 20:
-		dfprice['decision'] = 'BUY'
+		dfprice['decision'] = 'OVERWEIGHT'
 	elif difference[0] >= 50:
-		dfprice['decision'] = 'SBUY'
+		dfprice['decision'] = 'BUY'
 
 
 
@@ -88,4 +88,4 @@ def findMinimumEPS (stockpricedf,financialreportingdf):
 	pricebyyear['Close'] = pricebyyear['Close'].astype(str).astype(float)
 	pricebyyear['eps'] = finrepdf['eps']
 	pricebyyear['peratio'] = pricebyyear['Close']/pricebyyear['eps']
-	return pricebyyear['peratio'].min()
+	return pricebyyear['peratio'].mean()
