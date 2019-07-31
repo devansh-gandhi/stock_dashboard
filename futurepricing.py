@@ -43,7 +43,7 @@ def generate_price_df(ticker,financialreportingdf,stockpricedf,discountrate,marg
 
 	dfprice['FV'] = dfprice['futureeps']*dfprice['peratio']
 
-	print(dfprice[['futureeps','peratio' ]])
+	#print(dfprice[['futureeps','peratio' ]])
 
 	dfprice['PV'] = abs(np.pv(discountrate,years,0,fv=dfprice['FV']))
 
@@ -57,22 +57,12 @@ def generate_price_df(ticker,financialreportingdf,stockpricedf,discountrate,marg
 
 	difference = dfprice['marginprice'] - dfprice['lastshareprice']
 
-	if difference[0] < -50:
+	if difference[0] < -30:
 		dfprice['decision'] = 'SELL'
-	elif difference[0] < -20 and difference[0] >= -50:
-		dfprice['decision'] = 'UNDERWEIGHT'
-	elif difference[0] < 20 and  difference[0] >= -20:
+	elif difference[0] < 30 and  difference[0] >= -30:
 		dfprice['decision'] = 'HOLD'
-	elif difference[0] < 50 and  difference[0] >= 20:
-		dfprice['decision'] = 'OVERWEIGHT'
-	elif difference[0] >= 50:
+	elif difference[0] >= 30:
 		dfprice['decision'] = 'BUY'
-
-
-
-	#np.where((dfprice['lastshareprice']<dfprice['marginprice']),'BUY','SELL')
-
-	#print(dfprice)
 
 	return dfprice
 

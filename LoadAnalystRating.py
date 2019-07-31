@@ -42,9 +42,15 @@ def loadanalystrating(ticker):
 	sell = getelementinlist(selllist, 0)
 	mean = getelementinlist(meanlist, 0)
 
+	for i in range(len(buy)):
+		buy[i] = int(buy[i]) + int(overweight[i])
+		sell[i] = int(sell[i]) + int(underweight[i])
+
+
 	df = pd.DataFrame(
-		{'buy': buy, 'overweight': overweight, 'hold': hold, 'underweight': underweight, 'sell': sell, },
+		{'buy': buy, 'hold': hold,  'sell': sell, },
 		index=['current', 'one_month', 'three_month'])
+
 
 	for index, row in df.iterrows():
 	# print(index,row)
@@ -52,12 +58,9 @@ def loadanalystrating(ticker):
 			'stock-symbol': ticker,
 			'duration': index,
 			'buy': row['buy'],
-			'overweight': row['overweight'],
 			'hold': row['hold'],
-			'underweight': row['underweight'],
 			'sell': row['sell'],
 		})
-
 
 
 def getelementinlist(list,element):
@@ -69,6 +72,6 @@ def getelementinlist(list,element):
 
 
 if __name__ == '__main__':
-	loadanalystrating('aapl')
-	#loadanalystrating('msft')
+	#loadanalystrating('aapl')
+	loadanalystrating('msft')
 

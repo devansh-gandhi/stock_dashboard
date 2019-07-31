@@ -513,13 +513,9 @@ def generate_critical_graph(selected_dropdown_value,critical_dropdown_value,text
 	financialreportingwritten = financial_data_df
 	financialreportingwritten[['roe', 'interestcoverageratio']] = np.round(financial_data_df[['roe', 'interestcoverageratio']], 2)
 
-	data = [go.Bar(x=financialreportingwritten['year'], y = financialreportingwritten[financialreportingwritten[critical_dropdown_value] >= 0][critical_dropdown_value], marker_color='green', name ='Positive' ),
-			go.Bar(x=financialreportingwritten['year'], y=financialreportingwritten[financialreportingwritten[critical_dropdown_value] < 0][critical_dropdown_value],marker_color='red', name='neagtive')
+	data = [go.Bar(x=financialreportingwritten['year'], y = financialreportingwritten[financialreportingwritten[critical_dropdown_value] >= 0][critical_dropdown_value], marker_color='#28559A', name ='Positive' ),
+			go.Bar(x=financialreportingwritten['year'], y=financialreportingwritten[financialreportingwritten[critical_dropdown_value] < 0][critical_dropdown_value],marker_color='#7ED5EA', name='Negative')
 			]
-	#[
-	#	{'x': [1, 2, 3], 'y': [4, 1, 2], 'type': 'bar', 'name': 'SF'},
-	#	{'x': [1, 2, 3], 'y': [2, 4, 5], 'type': 'bar', 'name': u'Montréal'},
-	#],
 
 	figure = {
 		'data': data,
@@ -566,16 +562,16 @@ def generate_analyst_graph(selected_dropdown_value,current,one_month,three_month
 	else:
 		analyst_data_df = analyst_data_df[analyst_data_df['duration'] == 'current']
 
-	data = [go.Bar(x=analyst_data_df[['buy', 'overweight', 'hold', 'underweight', 'sell']].values.tolist()[0],
-				   y=['Buy', 'Overweight', 'Hold', 'Underweight', 'Sell'],orientation='h',
-				   marker = dict(color=['#008000', '#32cd32', '#dfbd8b', '#ff4d4d', "#ff0000"]),),
+	data = [go.Bar(x=analyst_data_df[['buy', 'hold', 'sell']].values.tolist()[0],
+				   y=['Buy', 'Hold', 'Sell'],orientation='h',
+				   marker = dict(color=[ "#28559A", '#4B9FE1','#7ED5EA']),),
 			]
 
 	title ='Current Analyst Rating'
 	figure = {
 		'data': data,
 		'layout': go.Layout(title= title ,
-							margin=go.layout.Margin(l=80, r=40, b=30, t=30, ), showlegend=False, )
+							margin=go.layout.Margin(l=40, r=40, b=30, t=30, ), showlegend=False, )
 	}
 
 
@@ -871,17 +867,11 @@ def generate_future_price_table(selected_dropdown_value,text_search,wordcloud_da
 	pricedf = generate_price_df(selected_dropdown_value.strip(), financial_data_df, stock_data_df, 0.15,0.15)
 
 	data = [go.Pie(
-		values=[50, 10, 10, 10, 10, 10],
-		labels=["Recommendation", "Sell", "Underweight", "Hold", "Overweight", "Buy"],
+		values=[50, 16.5, 17, 16.5],
+		labels=["Recommendation", "Hold", "Sell",  "Buy"],
 		domain={"x": [0, .8]},
-		marker_colors=[
-			'rgb(255, 255, 255)',
-			'rgb(255,0,0)',
-			'rgb(255, 77, 77)',
-			'rgb(223,189,139)',
-			'rgb(50,205,50)',
-			'rgb(0,128,0)'
-		],
+		marker_colors=['#fff', '#4B9FE1','#7ED5EA', '#28559A'],
+
 		name="Gauge",
 		hole=.3,
 		direction="clockwise",
@@ -893,20 +883,15 @@ def generate_future_price_table(selected_dropdown_value,text_search,wordcloud_da
 	)]
 
 	if pricedf.decision[0] == 'SELL':
-		path = 'M 0.395 0.5 L 0.30 0.545 L 0.405 0.5 Z'
-	elif pricedf.decision[0] == 'UNDERWEIGHT':
-		path = 'M 0.395 0.5 L 0.325 0.615 L 0.405 0.5 Z'
+		path = 'M 0.395 0.5 L 0.31 0.57 L 0.405 0.5 Z'
 	elif pricedf.decision[0] == 'HOLD':
 		path = 'M 0.395 0.5 L 0.4 0.65  L 0.405 0.5 Z'
-	elif pricedf.decision[0] == 'OVERWEIGHT':
-		path = 'M 0.395 0.5 L 0.48 0.615 L 0.405 0.5 Z'
 	elif pricedf.decision[0] == 'BUY':
-		path = 'M 0.395 0.5 L 0.50 0.545 L 0.405 0.5 Z'
+		path = 'M 0.395 0.5 L 0.49 0.57 L 0.405 0.5 Z'
 	figure = {
 		'data': data,
 		'layout': go.Layout(
-			# paper_bgcolor='rgba(0,0,0,0)',
-			# plot_bgcolor='rgba(0,0,0,0)'
+
 			shapes=[
 				dict(type='path', path=path, fillcolor='rgba(44, 160, 101, 0.5)',
 					 line_width=0.5, xref='paper', yref='paper')],
