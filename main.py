@@ -4,7 +4,7 @@ import TwitterStream
 import os
 
 if __name__ == '__main__':
-    data = Load('Microsoft')
+    data = Load('Apple')
     data.load_stock_data()
     #data.load_news_data()
     #es = Elasticsearch([{'host': 'localhost', 'port': '9200'}])
