@@ -16,7 +16,6 @@ from spacy import displacy
 from collections import Counter
 import en_core_web_sm
 import numpy as np
-
 from eligibilitycheck import eligibilitycheck
 from futurepricing import generate_price_df
 from elasticsearch import Elasticsearch
@@ -35,13 +34,14 @@ if 'DYNO' in os.environ:
 else:
 	app_name = 'stock-timeseriesplot'
 
+
 def context_search(article):
 	doc = nlp(article)
 	ent = []
 	for X in doc:
-		if((X.ent_iob_ == "B")& (X.ent_type_== "ORG")):
+		if X.ent_iob_ == "B" & X.ent_type_== "ORG":
 			ent.append(X.text)
-	return(Counter(ent).most_common(10)[0][0],dict(Counter(ent).most_common(10)))
+	return (Counter(ent).most_common(10)[0][0],dict(Counter(ent).most_common(10)))
 
 
 # returns modal (hidden by default)
@@ -282,7 +282,7 @@ def display_search_field(value):
 	Output('wordcloud', 'style'),
 	[Input('button','n_clicks')])
 def display_wordcloud_onclick(value):
-	if(value != None):
+	if value is not None:
 		return {"display": "block"}
 	else:
 		return {"display":'none'}
@@ -291,17 +291,16 @@ def display_wordcloud_onclick(value):
 	Output('wordcloud-div', 'style'),
 	[Input('button','n_clicks')])
 def display_wordcloud_onclick1(value):
-	if(value != None):
+	if value is not None:
 		return {'box-shadow': '0px 0px 5px 0px rgba(0,0,0,0.2)'}
 	else:
-		return {"display":'none'}
-
+		return {"display": 'none'}
 
 
 @app.callback(Output('my-graph', 'figure'),
-			  [Input('my-dropdown', 'value'),
-			  Input('text_search','value'),
-			  Input('wordcloud','clickData')])
+			[Input('my-dropdown', 'value'),
+			Input('text_search','value'),
+			Input('wordcloud','clickData')])
 def update_graph(selected_dropdown_value,text_search,wordcloud_data):
 	if(text_search != None):
 		company  = context_search(text_search)
@@ -844,8 +843,6 @@ def generate_reason_list(selected_dropdown_value):
 		Input('text_search', 'value'),
 	   	Input('wordcloud', 'clickData')])
 def generate_future_price_table(selected_dropdown_value,text_search,wordcloud_data, max_rows=10):
-	global stock_data_df
-	global financial_data_df
 
 	financial_data_dict = es.search(index='financial_data',
 									body={"size": 2000, "query": {"match": {"stock-symbol": selected_dropdown_value}}})
@@ -905,8 +902,6 @@ def generate_future_price_table(selected_dropdown_value,text_search,wordcloud_da
 		),
 	}
 
-
-	# Header
 	return  html.Div([
 			html.Div([html.P(['Annual Growth Rate'], className='modal-label div-25'),
 				html.P(['Last EPS ($)'], className='modal-label div-25'),

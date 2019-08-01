@@ -72,6 +72,6 @@ def getelementinlist(list,element):
 
 
 if __name__ == '__main__':
-	#loadanalystrating('aapl')
-	loadanalystrating('msft')
+
+	loadanalystrating(stock_ticker)
 

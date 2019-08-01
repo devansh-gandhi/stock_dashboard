@@ -116,4 +116,4 @@ def getfinancialreportingdfformatted(ticker):
 	#return dfformatted
 
 if __name__ == '__main__':
-	getfinancialreportingdfformatted('aapl')
+	getfinancialreportingdfformatted(stock_ticker)
