@@ -4,8 +4,6 @@ import os
 import dash
 import dash_core_components as dcc
 import dash_html_components as html
-import pandas as pd
-import plotly.graph_objs as go
 from dash.dependencies import Input, Output, State
 import dash_table
 import json
@@ -21,10 +19,10 @@ import numpy as np
 
 from eligibilitycheck import eligibilitycheck
 from futurepricing import generate_price_df
+from elasticsearch import Elasticsearch
 
 nlp = en_core_web_sm.load()
 
-from elasticsearch import Elasticsearch
 
 app = dash.Dash(__name__)
 app.config.suppress_callback_exceptions = True
@@ -45,12 +43,13 @@ def context_search(article):
 			ent.append(X.text)
 	return(Counter(ent).most_common(10)[0][0],dict(Counter(ent).most_common(10)))
 
+
 # returns modal (hidden by default)
 def modal():
 	return html.Div(
 		html.Div(
 			[html.Div(
-					[# modal header
+					[  # modal header
 						html.Div(
 							[
 								html.Span("Tweet",style={"color": "#000080","fontWeight": "bold","fontSize": "20",},),
@@ -105,7 +104,7 @@ def critical_table_modal():
 						className="row",style={"borderBottom": "1px solid #C8D4E3"},
 					),
 					# modal data
-					html.Div([html.P(id='critical_modal_data'),],className="row",style={"paddingTop": "2%"},),
+					html.Div([html.Div([],id='critical_modal_data'),],className="row",style={"paddingTop": "2%"},),
 
 				],className="modal-content",style={"textAlign": "center"},)
 			],className="modal",
@@ -212,7 +211,7 @@ app.layout = html.Div([
 
 					html.Div([dcc.Graph(id='decision-chart', config={'displayModeBar': False}, style={'align':'center', } ), ], id='decision-chart-div',className='indicators',),
 
-					html.Div([html.Table(id='expected-future-price-table',style={'display':'none'}),],),
+					html.Div([],id='expected-future-price-table',style={'display':'none'},),
 					html.Div([html.Div([html.Button('Current', id='current-button',n_clicks_timestamp=0, className='div-30 button'),
 								html.Button('1 Month Ago', id='one_month',n_clicks_timestamp=0, className='div-30 button'),
 								html.Button('3 Month Ago', id='three_month',n_clicks_timestamp=0, className='div-30 button'),], className='buttons-container' ),
@@ -749,7 +748,7 @@ def display_tweet_modal_callback(rows,selected_rows):
 
 
 	else:
-		return {"display": "none"}, 2
+		return {"display": "none"}, 0
 
 
 
@@ -884,10 +883,16 @@ def generate_future_price_table(selected_dropdown_value,text_search,wordcloud_da
 
 	if pricedf.decision[0] == 'SELL':
 		path = 'M 0.395 0.5 L 0.31 0.57 L 0.405 0.5 Z'
+		back_color = '#7ED5EA'
+		color = '#000000'
 	elif pricedf.decision[0] == 'HOLD':
 		path = 'M 0.395 0.5 L 0.4 0.65  L 0.405 0.5 Z'
+		back_color = '#4B9FE1'
+		color = '#000000'
 	elif pricedf.decision[0] == 'BUY':
 		path = 'M 0.395 0.5 L 0.49 0.57 L 0.405 0.5 Z'
+		back_color = '#28559A'
+		color = '#ffffff'
 	figure = {
 		'data': data,
 		'layout': go.Layout(
@@ -902,19 +907,40 @@ def generate_future_price_table(selected_dropdown_value,text_search,wordcloud_da
 
 
 	# Header
-	return [html.Tr([html.Th(col) for col in pricedf.columns])] + [html.Tr([
-		html.Td(html.B(pricedf.iloc[i][col])) if col == 'decision' else html.Td(round(pricedf.iloc[i][col], 2))
-		for col in pricedf.columns
-	]) for i in range(min(len(pricedf), max_rows))], figure
+	return  html.Div([
+			html.Div([html.P(['Annual Growth Rate'], className='modal-label div-25'),
+				html.P(['Last EPS ($)'], className='modal-label div-25'),
+				html.P(['Future EPS ($)'], className='modal-label div-25'),
+				html.P(['PE Ratio ($)'], className='modal-label div-25')
+			], className='sentiment_div'),
+			html.Div([html.P([round(pricedf['annualgrowthrate'].iloc[0],2)], className='modal-label div-25'),
+				html.P([round(pricedf['lasteps'].iloc[0], 2)], className='modal-label div-25'),
+				html.P([round(pricedf['futureeps'].iloc[0], 2)], className='modal-label div-25'),
+				html.P([round(pricedf['peratio'].iloc[0], 2)], className='modal-label div-25'),
+			], className='sentiment_div'),
+			html.Div([html.P(['Future Value ($)'], className='modal-label div-25'),
+				html.P(['Present Value ($)'], className='modal-label div-25'),
+				html.P(['Margin Price ($)'], className='modal-label div-25'),
+				html.P(['Last Share Price ($)'], className='modal-label div-25')
+			], className='sentiment_div'),
+			html.Div([html.P([round(pricedf['FV'].iloc[0], 2)], className='modal-label div-25'),
+				html.P([round(pricedf['PV'].iloc[0], 2)], className='modal-label div-25'),
+				html.P([round(pricedf['marginprice'].iloc[0], 2)], className='modal-label div-25'),
+				html.P([round(pricedf['lastshareprice'].iloc[0], 2)], className='modal-label div-25'),
+			], className='sentiment_div'),
+			html.Div([html.Div([pricedf['decision'].iloc[0]],
+						style={'background-color': back_color, 'color': color}, id='decision-div', className='div-40')]
+					 ,className='sentiment_div')
 
+		], id='expected_price_modal_div'), figure
 
 
 @app.callback(
 		[Output('critical_modal', 'style'),
-		 Output('critical_modal_data', 'children'), ],
-		 [Input('decision-chart', 'clickData'),],
+		Output('critical_modal_data', 'children'), ],
+		[Input('decision-chart', 'clickData'),],
 		[State('expected-future-price-table', 'children'),])
-def generate_future_price_table(clickData, pricetable , max_rows=10):
+def generate_future_price_table(clickData, pricetable):
 	if clickData is not 0:
 		return {"display": "block"}, pricetable
 	else:
@@ -925,7 +951,7 @@ def generate_future_price_table(clickData, pricetable , max_rows=10):
 @app.callback(
 	Output('decision-chart', 'clickData'),
 [Input("critical_modal_close", "n_clicks")])
-def reset_clickData(n_clicks):
+def reset_clickdata(n_clicks):
 	return 0
 
 
