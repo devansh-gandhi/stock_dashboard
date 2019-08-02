@@ -4,10 +4,10 @@ from dash.dependencies import Input, Output, State
 import pandas as pd
 import plotly.graph_objs as go
 import numpy as np
-from src.view.eligibilitycheck import eligibilitycheck
-from src.view.futurepricing import generate_price_df
+from eligibilitycheck import eligibilitycheck
+from futurepricing import generate_price_df
 from elasticsearch import Elasticsearch
-from src.view.app import app
+from app import app
 
 
 es = Elasticsearch([{'host': 'localhost', 'port': '9200'}])

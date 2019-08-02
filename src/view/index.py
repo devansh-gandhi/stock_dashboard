@@ -2,8 +2,8 @@ import dash_core_components as dcc
 import dash_html_components as html
 from dash.dependencies import Input, Output
 
-from src.view.app import app
-from src.view.apps import sentiment_analysis, earnings_analysis
+from app import app
+from apps import sentiment_analysis, earnings_analysis
 
 
 app.layout = html.Div([
@@ -26,7 +26,6 @@ app.layout = html.Div([
 		value="sentiment_tab",
 	),
 
-
 	html.Div([],id="tab-content"),
 
 	],className='right-container'),
@@ -37,7 +36,7 @@ app.layout = html.Div([
 
 
 @app.callback(Output('tab-content', 'children'),
-			  [Input('tabs', 'value')])
+			[Input('tabs', 'value')])
 def display_page(tab):
 	if tab == 'sentiment_tab':
 		return  sentiment_analysis.layout

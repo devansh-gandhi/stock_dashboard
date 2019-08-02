@@ -10,7 +10,7 @@ from collections import Counter
 import en_core_web_sm
 from elasticsearch import Elasticsearch
 
-from src.view.app import app
+from app import app
 
 es = Elasticsearch([{'host': 'localhost', 'port': '9200'}])
 nlp = en_core_web_sm.load()
