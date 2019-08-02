@@ -184,13 +184,14 @@ def upload_data_selected_dropdown_store(selected_dropdown_value,text_search, wor
 # show hide dropdown / text field
 @app.callback(
 	[Output('my-dropdown', 'style'),
-	 Output('extract_div', 'style'), ],
+	 Output('extract_div', 'style'),
+	 Output('button', 'n_clicks')],
 	[Input('radio-div', 'value')])
 def display_search_field(value):
 	if value == 'EX':
-		return {"display": "none"}, {"display": "block"}
+		return {"display": "none"}, {"display": "block"}, None
 	else:
-		return {"display": "block"}, {"display": "none"}
+		return {"display": "block"}, {"display": "none"}, None
 
 
 @app.callback(
