@@ -158,7 +158,8 @@ layout = html.Div([
 
 # pass dropdown value to dash store
 @app.callback(
-	Output('selected_dropdown_store', 'data'),
+	[Output('selected_dropdown_store', 'data'),
+	 Output('div-hidden', 'children'),],
 	[Input('my-dropdown', 'value'),
 	Input('text_search', 'value'),
 	 Input('wordcloud', 'clickData')
@@ -177,7 +178,7 @@ def upload_data_selected_dropdown_store(selected_dropdown_value,text_search, wor
 	else:
 		selected_dropdown_value = selected_dropdown_value
 
-	return selected_dropdown_value
+	return selected_dropdown_value,selected_dropdown_value
 
 
 # show hide dropdown / text field
