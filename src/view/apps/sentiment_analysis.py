@@ -86,7 +86,7 @@ layout = html.Div([
 				options=[{'label': 'Microsoft', 'value': 'MSFT'}, {'label': 'Apple', 'value': 'AAPL'},
 							{'label': 'Google', 'value': 'GOOG'}], value='MSFT', ),
 
-		html.Div([dcc.Input(id='text_search', value=None, placeholder='Enter a extract....', ),
+		html.Div([dcc.Input(id='text_search', value='', placeholder='Enter a extract....', ),
 				html.Button('Submit', id='button'), ], id='extract_div', style={"display": "none"}),
 
 		html.Div([dcc.Graph(id='wordcloud', style={"display": "block", }), ], id='wordcloud-div',
@@ -161,19 +161,22 @@ layout = html.Div([
 	[Output('selected_dropdown_store', 'data'),
 	 Output('div-hidden', 'children'),],
 	[Input('my-dropdown', 'value'),
-	Input('text_search', 'value'),
-	 Input('wordcloud', 'clickData')
-	]
+	Input('wordcloud', 'clickData'),
+	Input('button', 'n_clicks')
+	],
+	[State('text_search', 'value'),]
 )
-def upload_data_selected_dropdown_store(selected_dropdown_value,text_search, wordcloud_data):
-	if text_search is not None:
-		company = context_search(text_search)
-		company = company[0]
-		dropdown = {"Microsoft": "MSFT", "Apple": "AAPL", "Google": "GOOG", }
+def upload_data_selected_dropdown_store(selected_dropdown_value, wordcloud_data,nclicks,text_search):
+	dropdown = {"Microsoft": "MSFT", "Apple": "AAPL", "Google": "GOOG", }
+	if nclicks:
+		if text_search != '':
+			company = context_search(text_search)
+			company = company[0]
+
+			selected_dropdown_value1 = company
 		if wordcloud_data:
 			selected_dropdown_value1 = wordcloud_data['points'][0]['text']
-		else:
-			selected_dropdown_value1 = company
+
 		selected_dropdown_value = dropdown[selected_dropdown_value1]
 	else:
 		selected_dropdown_value = selected_dropdown_value
@@ -192,18 +195,6 @@ def display_search_field(value):
 		return {"display": "none"}, {"display": "block"}, None
 	else:
 		return {"display": "block"}, {"display": "none"}, None
-
-
-@app.callback(
-	[Output('wordcloud', 'style'),
-	 Output('wordcloud-div', 'style'),],
-	[Input('button', 'n_clicks')])
-def display_wordcloud_onclick(value):
-	if value is not None:
-		return {"display": "block"} , {'box-shadow': '0px 0px 5px 0px rgba(0,0,0,0.2)'}
-	else:
-		return {"display": 'none'}, {"display": 'none'}
-
 
 
 @app.callback(Output('my-graph', 'figure'),
@@ -467,35 +458,53 @@ def reset_clickData(n_clicks):
 	[Input('button', 'n_clicks')],
 	[State('text_search', 'value')])
 def wordcloud(clicks, y):
-	x = context_search(y)
-	print(x[1])
-	words = list(x[1].keys())
+	if clicks is not None:
+		x = context_search(y)
+		print(x[1])
+		words = list(x[1].keys())
 
-	frequency = list(x[1].values())
+		frequency = list(x[1].values())
 
-	lower, upper = 15, 45
-	frequency = [((x - min(frequency)) / (max(frequency) - min(frequency))) * (upper - lower) + lower for x in
-				 frequency]
+		lower, upper = 15, 45
+		frequency = [((x - min(frequency)) / (max(frequency) - min(frequency))) * (upper - lower) + lower for x in
+					 frequency]
 
-	percent = [0.362086258776329, 0.13139418254764293, 0.11802072885322636, 0.055834169174189235, 0.041123370110330994,
-			   0.03978602474088933, 0.02774991641591441, 0.02139752591106653, 0.01905717151454363, 0.015379471748579069]
+		percent = [0.362086258776329, 0.13139418254764293, 0.11802072885322636, 0.055834169174189235, 0.041123370110330994,
+				   0.03978602474088933, 0.02774991641591441, 0.02139752591106653, 0.01905717151454363, 0.015379471748579069]
 
-	length = len(words)
-	colors = [py.colors.DEFAULT_PLOTLY_COLORS[random.randrange(1, 10)] for i in range(length)]
+		length = len(words)
+		colors = [py.colors.DEFAULT_PLOTLY_COLORS[random.randrange(1, 10)] for i in range(length)]
 
-	data = go.Scatter(
-		x=[5, 1, 2, 4, 3, 6, 7, 8, 9, 10],
-		y=random.choices(range(length), k=length),
-		mode='text',
-		text=words,
-		hovertext=['{0}{1}'.format(w, f) for w, f in zip(words, frequency)],
-		hoverinfo='text',
-		textfont={'size': frequency * 2, 'color': colors})
+		data = [ go.Scatter(
+			x=[5, 1, 2, 4, 3, 6, 7, 8, 9, 10],
+			y=random.choices(range(length), k=length),
+			mode='text',
+			text=words,
+			hovertext=['{0}{1}'.format(w, f) for w, f in zip(words, frequency)],
+			hoverinfo='text',
+			textfont={'size': frequency * 2, 'color': colors})]
+	else:
+		data = []
+
+
 	layout = go.Layout({'xaxis': {'showgrid': False, 'showticklabels': False, 'zeroline': False},
 						'yaxis': {'showgrid': False, 'showticklabels': False, 'zeroline': False},
 						}, margin=go.layout.Margin(l=20, r=10, b=40, t=10, ), )
 
-	fig = go.Figure(data=[data], layout=layout, )
+	fig = go.Figure(data=data, layout=layout, )
 	return fig
 
+
+
+
+@app.callback(
+	[Output('wordcloud', 'style'),
+	 Output('wordcloud-div', 'style'),
+	 Output('text_search', 'value'),],
+	[Input('button', 'n_clicks')])
+def display_wordcloud_onclick(value):
+	if value is not None:
+		return {"display": "block"} , {'box-shadow': '0px 0px 5px 0px rgba(0,0,0,0.2)'} , ''
+	else:
+		return {"display": 'none'}, {"display": 'none'}, ''
 
