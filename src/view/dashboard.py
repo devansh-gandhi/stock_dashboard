@@ -24,6 +24,7 @@ nlp = en_core_web_sm.load()
 
 
 app = dash.Dash(__name__)
+server = app.server
 app.config.suppress_callback_exceptions = True
 
 
