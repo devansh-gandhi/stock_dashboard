@@ -1,1 +1,1 @@
-web: gunicorn --pythonpath src view.index
+web: gunicorn --chdir src/view app:server
