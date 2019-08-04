@@ -14,6 +14,7 @@ elasticsearch==7.0.2
 https://github.com/explosion/spacy-models/releases/download/en_core_web_sm-2.1.0/en_core_web_sm-2.1.0.tar.gz#egg=en_core_web_sm==2.1.0
 Flask==1.1.1
 Flask-Compress==1.4.0
+gunicorn==19.9.0
 idna==2.8
 itsdangerous==1.1.0
 Jinja2==2.10.1
