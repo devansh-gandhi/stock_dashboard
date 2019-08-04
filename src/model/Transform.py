@@ -2,7 +2,7 @@ from textblob import TextBlob
 from Extract import Extract
 import json
 import spacy
-
+import en_core_web_sm
 
 class Transform:
 
@@ -24,7 +24,7 @@ class Transform:
 
     def get_ner_dict(self,description):
         ner_list = []
-        spacy_nlp = spacy.load('en')
+        spacy_nlp = en_core_web_sm.load()
         document = spacy_nlp(description)
         for element in document.ents:
             ner_list.append(str(element))

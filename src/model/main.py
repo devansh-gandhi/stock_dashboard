@@ -28,14 +28,17 @@ if __name__ == '__main__':
 
 	es = Elasticsearch(es_header)
 
-	keyword = sys.argv[1]
+	#keyword = sys.argv[1]
+	keyword = 'Apple'
 
 	stock_dict = {"apple": "AAPL", "google": "GOOG", "microsoft": "MSFT", "amazon": "AMZN", "facebook": "FB",
                    "walmart": "WMT", "intel": "INTC", "barclays": "BCS"}
 	stock_ticker = stock_dict[keyword.lower().strip()]
 
+	print(stock_ticker)
+
 	data = Load(keyword,es)
-	data.load_stock_data()
+	#data.load_stock_data()
 	data.load_news_data()
 
 
