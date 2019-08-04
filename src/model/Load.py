@@ -5,12 +5,12 @@ from elasticsearch import Elasticsearch
 
 
 class Load:
-    es = Elasticsearch([{'host': 'localhost', 'port': '9200'}])
 
-    def __init__(self, company_name):
+
+    def __init__(self, company_name,es):
         self.company_name = company_name
         self.transform = Transform(self.company_name)
-        self.res = requests.get('http://localhost:9200')
+        self.es = es
 
     def load_stock_data(self):
         stock_data = self.transform.get_stock_data()

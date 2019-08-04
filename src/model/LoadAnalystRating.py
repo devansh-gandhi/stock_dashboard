@@ -4,9 +4,9 @@ from bs4 import BeautifulSoup
 import requests
 from elasticsearch import Elasticsearch
 
-es = Elasticsearch([{'host': 'localhost', 'port': '9200'}])
 
-def loadanalystrating(ticker):
+
+def loadanalystrating(ticker,es):
 	urlratings = 'https://www.marketwatch.com/investing/stock/'+ticker+'/analystestimates'
 
 	text_soup_ratings = BeautifulSoup(requests.get(urlratings).text, "lxml")
@@ -73,5 +73,5 @@ def getelementinlist(list,element):
 
 if __name__ == '__main__':
 
-	loadanalystrating(stock_ticker)
+	loadanalystrating(stock_ticker,es)
 

@@ -8,7 +8,7 @@ import sys
 #import KTFInfo
 from Transform import Transform
 
-es = Elasticsearch()
+from main import es
 
 class TweetsStreamDataListener(StreamListener):
 	# on success

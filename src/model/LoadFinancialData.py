@@ -7,8 +7,6 @@ from elasticsearch import Elasticsearch
 from format import format
 
 
-es = Elasticsearch([{'host': 'localhost', 'port': '9200'}])
-
 def getfinancialreportingdf(ticker):
 
   # try:
@@ -85,7 +83,7 @@ def getelementinlist(list,element):
 		return '-'
 
 # Getting financial reporting df
-def getfinancialreportingdfformatted(ticker):
+def getfinancialreportingdfformatted(ticker,es):
 	df = getfinancialreportingdf(ticker)
 	# Format all the number in dataframe
 	dfformatted = df.apply(format)
@@ -116,4 +114,4 @@ def getfinancialreportingdfformatted(ticker):
 	#return dfformatted
 
 if __name__ == '__main__':
-	getfinancialreportingdfformatted(stock_ticker)
+	getfinancialreportingdfformatted(stock_ticker,es)
