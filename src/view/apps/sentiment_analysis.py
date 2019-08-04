@@ -11,7 +11,7 @@ import en_core_web_sm
 #import spacy
 from elasticsearch import Elasticsearch
 
-from app import app
+from src.view.app import app
 
 es = Elasticsearch([{'host': 'localhost', 'port': '9200'}])
 #nlp = spacy.load('en_core_web_sm')
