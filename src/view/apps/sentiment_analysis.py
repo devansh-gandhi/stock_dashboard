@@ -19,6 +19,31 @@ es = Elasticsearch([{'host': 'localhost', 'port': '9200'}])
 nlp = en_core_web_sm.load()
 
 
+def get_es():
+	logging.basicConfig(level=logging.INFO)
+
+	os.environ['BONSAI_URL'] = 'https://1uxb44vnlu:26dsa53ns7@ash-591153868.us-east-1.bonsaisearch.net'
+
+	try:
+		bonsai = os.environ.get('BONSAI_URL')
+	except Exception as e:
+		print("{0}".format(e.__class__))
+
+	# Parse the auth and host from env:
+	auth = re.search('https\:\/\/(.*)\@', bonsai).group(1).split(':')
+	host = bonsai.replace('https://%s:%s@' % (auth[0], auth[1]), '')
+
+	es_header = [{
+		'host': host,
+		'port': 443,
+		'use_ssl': True,
+		'http_auth': (auth[0], auth[1])
+	}]
+
+	es = Elasticsearch(es_header)
+
+	return es
+
 def context_search(article):
 	doc = nlp(article)
 	ent = []
@@ -210,6 +235,7 @@ def update_graph(no_input,selected_dropdown_value):
 	trace1 = []
 	trace2 = []
 
+	es = get_es()
 	data_dict = es.search(index='stock_data',
 						body={"size": 50, "query": {"match": {"stock-symbol": selected_dropdown_value}}})
 	initial_df = pd.DataFrame.from_dict(data_dict['hits']['hits'])
@@ -244,10 +270,12 @@ def update_graph(no_input,selected_dropdown_value):
 def update_piechart(no_input,stock_clickData,selected_dropdown_value):
 
 	dropdown = {"MSFT": "Microsoft", "AAPL": "Apple", "GOOG": "Google"}
+	es = get_es()
 	label_data_dict = es.search(index='tweets_data', body={"size": 100, "query": {
 			"match": {"company_name": dropdown[selected_dropdown_value]}}})
 	news_data_dict = es.search(index='news_data', body={"size": 100, "query": {
 			"match": {"company_name": dropdown[selected_dropdown_value]}}})
+
 
 	initial_df = pd.DataFrame.from_dict(label_data_dict['hits']['hits'])
 	label_data_df = pd.concat([initial_df.drop(['_source'], axis=1), initial_df['_source'].apply(pd.Series)], axis=1)
@@ -293,6 +321,7 @@ def update_news_feed(no_input, clickData, stock_clickData, selected_dropdown_val
 
 	dropdown = {"MSFT": "Microsoft", "AAPL": "Apple", "GOOG": "Google"}
 
+	es = get_es()
 	news_data_dict = es.search(index='news_data', body={"size": 100, "query": {
 			"match": {"company_name": dropdown[selected_dropdown_value]}}})
 
@@ -330,6 +359,7 @@ def display_news_modal_callback(rows, selected_rows):
 		# selected_list = [rows[i] for i in selected_rows]
 		dff = pd.DataFrame(rows).iloc[selected_rows]
 
+		es = get_es()
 		news_modal_dict = es.search(index='news_data',
 									body={"size": 1, "query": {"match": {"title": dff['title'].to_json()}}})
 		initial_df = pd.DataFrame.from_dict(news_modal_dict['hits']['hits'])
@@ -377,8 +407,10 @@ def close_modal_callback(n):
 def update_tweet_feed(no_input, clickData, stock_clickData,selected_dropdown_value ):
 
 	dropdown = {"MSFT": "Microsoft", "AAPL": "Apple", "GOOG": "Google", "FB": 'Facebook'}
+	es = get_es()
 	tweet_data_dict = es.search(index='tweets_data', body={"size": 100, "query": {
 			"match": {"company_name": dropdown[selected_dropdown_value]}}})
+
 
 	initial_df = pd.DataFrame.from_dict(tweet_data_dict['hits']['hits'])
 	tweet_data_df = pd.concat([initial_df.drop(['_source'], axis=1), initial_df['_source'].apply(pd.Series)], axis=1)
@@ -411,6 +443,7 @@ def display_tweet_modal_callback(rows, selected_rows):
 	if selected_rows is not 0:
 
 		dff = pd.DataFrame(rows).iloc[selected_rows]
+		es = get_es()
 
 		tweet_modal_dict = es.search(index='tweets_data',
 									 body={"size": 1, "query": {"match": {"message": dff['message'].to_json()}}})

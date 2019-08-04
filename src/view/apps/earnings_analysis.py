@@ -8,9 +8,36 @@ from src.view.eligibilitycheck import eligibilitycheck
 from src.view.futurepricing import generate_price_df
 from elasticsearch import Elasticsearch
 from src.view.app import app
+import os, base64, re, logging
+
+#es = Elasticsearch([{'host': 'localhost', 'port': '9200'}])
 
 
-es = Elasticsearch([{'host': 'localhost', 'port': '9200'}])
+def get_es():
+	logging.basicConfig(level=logging.INFO)
+
+	os.environ['BONSAI_URL'] = 'https://1uxb44vnlu:26dsa53ns7@ash-591153868.us-east-1.bonsaisearch.net'
+
+	try:
+		bonsai = os.environ.get('BONSAI_URL')
+	except Exception as e:
+		print("{0}".format(e.__class__))
+
+	# Parse the auth and host from env:
+	auth = re.search('https\:\/\/(.*)\@', bonsai).group(1).split(':')
+	host = bonsai.replace('https://%s:%s@' % (auth[0], auth[1]), '')
+
+	es_header = [{
+		'host': host,
+		'port': 443,
+		'use_ssl': True,
+		'http_auth': (auth[0], auth[1])
+	}]
+
+	es = Elasticsearch(es_header)
+
+	return es
+
 
 
 def critical_table_modal():
@@ -114,7 +141,7 @@ def update_indicator_graph(tech_dropdown_value,selected_dropdown_value):
 
 	trace1 = []
 	trace2 = []
-
+	es = get_es()
 	data_dict = es.search(index='stock_data', body={"size": 50, "query": {"match": {"stock-symbol": selected_dropdown_value}}})
 	initial_df = pd.DataFrame.from_dict(data_dict['hits']['hits'])
 	stock_data_df = pd.concat([initial_df.drop(['_source'], axis=1), initial_df['_source'].apply(pd.Series)],axis=1)
@@ -184,7 +211,7 @@ def update_indicator_graph(tech_dropdown_value,selected_dropdown_value):
 			)
 def generate_critical_graph(critical_dropdown_value,selected_dropdown_value):
 
-
+	es = get_es()
 	financial_data_dict = es.search(index='financial_data',body={"size": 2000, "query": {"match": {"stock-symbol": selected_dropdown_value}}})
 	initial_df = pd.DataFrame.from_dict(financial_data_dict['hits']['hits'])
 	financial_data_df = pd.concat([initial_df.drop(['_source'], axis=1), initial_df['_source'].apply(pd.Series)],
@@ -222,7 +249,7 @@ def generate_critical_graph(critical_dropdown_value,selected_dropdown_value):
 			  )
 def generate_analyst_graph(current,one_month,three_month,selected_dropdown_value):
 
-
+	es = get_es()
 	analyst_data_dict = es.search(index='analyst_data',
 									body={"size": 2000, "query": {"match": {"stock-symbol": selected_dropdown_value}}})
 	initial_df = pd.DataFrame.from_dict(analyst_data_dict['hits']['hits'])
@@ -263,6 +290,7 @@ def generate_analyst_graph(current,one_month,three_month,selected_dropdown_value
 def generate_reason_list(no_input, selected_dropdown_value):
 	global financial_data_df  # Needed to modify global copy of financialreportingdf
 
+	es = get_es()
 	financial_data_dict = es.search(index='financial_data',
 									body={"size": 2000, "query": {"match": {"stock-symbol": selected_dropdown_value}}})
 	initial_df = pd.DataFrame.from_dict(financial_data_dict['hits']['hits'])
@@ -290,6 +318,7 @@ def generate_reason_list(no_input, selected_dropdown_value):
 		)
 def generate_future_price_table(no_input,selected_dropdown_value, max_rows=10):
 
+	es = get_es()
 	financial_data_dict = es.search(index='financial_data',
 									body={"size": 2000, "query": {"match": {"stock-symbol": selected_dropdown_value}}})
 	initial_df = pd.DataFrame.from_dict(financial_data_dict['hits']['hits'])

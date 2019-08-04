@@ -17,7 +17,7 @@ class TweetsStreamDataListener(StreamListener):
 		tweet_label = Transform.get_sentiment(Transform,dict_data["text"])
 		if tweet_label != 'uncategorized' and ('RT @' not in dict_data['text']):
 			#print(tweet_label + " : " + dict_data["text"])
-			es.index(index="tweets_data",
+			main.es.index(index="tweets_data",
 					 doc_type="tweet",
 					 body={"author": dict_data["user"]["screen_name"],
 						   "date": dict_data["created_at"],
