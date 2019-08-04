@@ -2,8 +2,8 @@ import dash_core_components as dcc
 import dash_html_components as html
 from dash.dependencies import Input, Output
 
-from app import app
-from apps import sentiment_analysis, earnings_analysis
+from src.view.app import app
+from src.view.apps import sentiment_analysis, earnings_analysis
 
 
 app.layout = html.Div([
