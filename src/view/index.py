@@ -6,6 +6,8 @@ from src.view.app import app
 from src.view.apps import sentiment_analysis, earnings_analysis
 
 
+server = app.server
+
 app.layout = html.Div([
 
 	html.Div([
