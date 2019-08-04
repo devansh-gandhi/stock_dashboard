@@ -5,8 +5,7 @@ from dash.dependencies import Input, Output
 from src.view.app import app
 from src.view.apps import sentiment_analysis, earnings_analysis
 
-
-server = app.server
+from src.view.app import server
 
 app.layout = html.Div([
 
