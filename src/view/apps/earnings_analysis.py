@@ -68,7 +68,6 @@ layout = html.Div([
 
 	html.Div([
 		html.Div([html.H3('Buy / Sell Decision'), ], className='div-33'),
-		html.Div([html.H3('Analyst Rating'), ], className='div-33'),
 		html.Div([html.H3('Warning Flags'), ], className='div-33'),
 	], className='sentiment_div', ),
 
@@ -254,19 +253,23 @@ def generate_analyst_graph(current,one_month,three_month,selected_dropdown_value
 								  axis=1)
 	if int(current) > int(one_month) and int(current) > int(three_month):
 		analyst_data_df = analyst_data_df[analyst_data_df['duration'] == 'current']
+		title = 'Current Analyst Rating'
 	elif int(one_month) > int(current) and int(one_month) > int(three_month) :
 		analyst_data_df = analyst_data_df[analyst_data_df['duration'] == 'one_month']
+		title = 'Analyst Rating One Month Ago'
 	elif int(three_month) > int(current) and int(three_month) > int(one_month):
 		analyst_data_df = analyst_data_df[analyst_data_df['duration'] == 'three_month']
+		title = 'Analyst Rating Three Months Ago'
 	else:
 		analyst_data_df = analyst_data_df[analyst_data_df['duration'] == 'current']
+		title = 'Current Analyst Rating'
 
 	data = [go.Bar(x=analyst_data_df[['sell', 'hold', 'buy']].values.tolist()[0],
 				   y=['Sell', 'Hold', 'Buy'],orientation='h',
-				   marker = dict(color=[ "#28559A", '#4B9FE1','#7ED5EA']),),
+				   marker = dict(color=[ '#7ED5EA', '#4B9FE1',"#28559A"]),),
 			]
 
-	title ='Current Analyst Rating'
+
 	figure = {
 		'data': data,
 		'layout': go.Layout(title= title ,
@@ -365,6 +368,7 @@ def generate_future_price_table(no_input,selected_dropdown_value, max_rows=10):
 	figure = {
 		'data': data,
 		'layout': go.Layout(
+			title=f"Stock Recommendation",
 
 			shapes=[
 				dict(type='path', path=path, fillcolor='rgba(44, 160, 101, 0.5)',
