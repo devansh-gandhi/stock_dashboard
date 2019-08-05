@@ -74,7 +74,8 @@ layout = html.Div([
 
 	html.Div([
 
-		html.Div([dcc.Graph(id='decision-chart', config={'displayModeBar': False}, style={'align': 'center', }), ],
+		html.Div([dcc.Graph(id='decision-chart', config={'displayModeBar': False}, style={'align': 'center', }),
+				  html.Table(id='reason-list'),],
 				 id='decision-chart-div', className='indicators', ),
 
 		html.Div([], id='expected-future-price-table', style={'display': 'none'}, ),
@@ -91,10 +92,6 @@ layout = html.Div([
 
 	], className='sentiment_div', ),
 
-	html.Div([
-		html.Div([html.H3('Critical varables and Ratios'), ], className='div-40'),
-		html.Div([html.H3('Technical indicators'), ], className='div-60'),
-	], className='sentiment_div', ),
 
 	html.Div([
 		html.Div([dcc.Dropdown(id='critical-indicators-dropdown',
