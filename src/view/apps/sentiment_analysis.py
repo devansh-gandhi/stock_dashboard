@@ -298,11 +298,9 @@ def update_piechart(no_input,stock_clickData,selected_dropdown_value):
 	figure = {
 		'data': data,
 		'layout': go.Layout(
-			# paper_bgcolor='rgba(0,0,0,0)',
-			# plot_bgcolor='rgba(0,0,0,0)'
 			title=f"Sentiment Analysis",
-			legend=dict(orientation='h', yanchor='bottom', xanchor='center', y=1.2, x=0.5, ),
-			margin=go.layout.Margin(l=10, r=10, b=10, t=30, ),
+			legend=dict(orientation='h', yanchor='bottom', xanchor='center', y=0.2, x=0.5, ),
+			margin=go.layout.Margin(l=10, r=10, b=10, t=50, ),
 		),
 	}
 	return figure
