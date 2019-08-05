@@ -69,7 +69,7 @@ layout = html.Div([
 	html.Div([
 
 		html.Div([dcc.Graph(id='decision-chart', config={'displayModeBar': False}, style={'align': 'center', }),
-				html.Div([html.H3('Warning Flags'), ], className='indicators'),
+				html.Div([html.H3('Warning Flags'), ], className='warningflagdiv'),
 				html.Table(id='reason-list'),],
 				 id='decision-chart-div', className='indicators', ),
 
@@ -338,7 +338,7 @@ def generate_future_price_table(no_input,selected_dropdown_value, max_rows=10):
 
 	data = [go.Pie(
 		values=[50, 16.5, 17, 16.5],
-		labels=["Recommendation", "Hold", "Sell",  "Buy"],
+		labels=["Click to Know More", "Hold", "Sell",  "Buy"],
 		domain={"x": [0, .8]},
 		marker_colors=['#fff', '#4B9FE1','#7ED5EA', '#28559A'],
 
