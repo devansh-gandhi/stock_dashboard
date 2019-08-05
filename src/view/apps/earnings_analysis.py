@@ -273,7 +273,7 @@ def generate_analyst_graph(current,one_month,three_month,selected_dropdown_value
 	figure = {
 		'data': data,
 		'layout': go.Layout(title= title ,
-							margin=go.layout.Margin(l=40, r=40, b=30, t=30, ), showlegend=False, )
+							margin=go.layout.Margin(l=40, r=40, b=30, t=40, ), showlegend=False, )
 	}
 
 
@@ -374,7 +374,7 @@ def generate_future_price_table(no_input,selected_dropdown_value, max_rows=10):
 				dict(type='path', path=path, fillcolor='rgba(44, 160, 101, 0.5)',
 					line_width=0.5, xref='paper', yref='paper')],
 
-			margin=go.layout.Margin(l=30, r=0, b=0, t=20, ),
+			margin=go.layout.Margin(l=30, r=0, b=0, t=30, ),
 		),
 	}
 
