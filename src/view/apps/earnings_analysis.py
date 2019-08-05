@@ -87,7 +87,7 @@ layout = html.Div([
 			 dcc.Graph(id='analyst-chart', config={'displayModeBar': False}, style={'align': 'center', }), ],
 			style={'display': 'block'}, className='indicators', ),
 
-		html.Div([html.Table(id='reason-list'), ], className='indicators', ),
+		html.Div([ ], className='indicators', ),
 
 
 	], className='sentiment_div', ),

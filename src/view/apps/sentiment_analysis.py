@@ -123,11 +123,6 @@ layout = html.Div([
 
 	], id='my-dropdown-div'),
 
-	html.Div([
-		html.Div([html.H3('Sentiment Chart'), ], className='div-30'),
-
-
-	], className='sentiment_div', ),
 
 	html.Div([
 		html.Div([html.Div([dcc.Graph(id='pie-chart', config={'displayModeBar': False}, ), ], className='pie-chart-div',
@@ -307,7 +302,7 @@ def update_piechart(no_input,stock_clickData,selected_dropdown_value):
 			# plot_bgcolor='rgba(0,0,0,0)'
 			title=f"Sentiment Analysis",
 			legend=dict(orientation='h', yanchor='bottom', xanchor='center', y=1.2, x=0.5, ),
-			margin=go.layout.Margin(l=10, r=10, b=10, t=10, ),
+			margin=go.layout.Margin(l=10, r=10, b=10, t=30, ),
 		),
 	}
 	return figure
