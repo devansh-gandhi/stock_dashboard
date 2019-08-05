@@ -300,7 +300,7 @@ def update_piechart(no_input,stock_clickData,selected_dropdown_value):
 		'layout': go.Layout(
 			title=f"Sentiment Analysis",
 			legend=dict(orientation='h', yanchor='bottom', xanchor='center', y=-0.25, x=0.5, ),
-			margin=go.layout.Margin(l=10, r=10, b=40, t=40, ),
+			margin=go.layout.Margin(l=10, r=10, b=40, t=50, ),
 		),
 	}
 	return figure
