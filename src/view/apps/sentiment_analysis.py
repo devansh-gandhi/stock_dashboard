@@ -519,7 +519,10 @@ def wordcloud(clicks, y):
 
 	layout = go.Layout({'xaxis': {'showgrid': False, 'showticklabels': False, 'zeroline': False},
 						'yaxis': {'showgrid': False, 'showticklabels': False, 'zeroline': False},
-						}, margin=go.layout.Margin(l=20, r=10, b=40, t=10, ), )
+						},
+						paper_bgcolor='rgba(0,0,0,0)',
+						plot_bgcolor='rgba(0,0,0,0)',
+						margin=go.layout.Margin(l=20, r=10, b=40, t=10, ), )
 
 	fig = go.Figure(data=data, layout=layout, )
 	return fig
