@@ -38,11 +38,11 @@ if __name__ == '__main__':
 	print(stock_ticker)
 
 	data = Load(keyword,es)
-	data.load_stock_data()
-	data.load_news_data()
+	#data.load_stock_data()
+	#data.load_news_data()
 
 
 
-	exec(open('LoadAnalystRating.py').read())
-	exec(open('LoadFinancialData.py').read())
-	#exec(open('TwitterStream.py').read())
+	#exec(open('LoadAnalystRating.py').read())
+	#exec(open('LoadFinancialData.py').read())
+	exec(open('TwitterStream.py').read())
