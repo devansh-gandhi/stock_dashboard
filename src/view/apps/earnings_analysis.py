@@ -261,8 +261,8 @@ def generate_analyst_graph(current,one_month,three_month,selected_dropdown_value
 	else:
 		analyst_data_df = analyst_data_df[analyst_data_df['duration'] == 'current']
 
-	data = [go.Bar(x=analyst_data_df[['buy', 'hold', 'sell']].values.tolist()[0],
-				   y=['Buy', 'Hold', 'Sell'],orientation='h',
+	data = [go.Bar(x=analyst_data_df[['sell', 'hold', 'buy']].values.tolist()[0],
+				   y=['Sell', 'Hold', 'Buy'],orientation='h',
 				   marker = dict(color=[ "#28559A", '#4B9FE1','#7ED5EA']),),
 			]
 
