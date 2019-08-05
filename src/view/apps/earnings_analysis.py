@@ -67,23 +67,22 @@ def critical_table_modal():
 layout = html.Div([
 
 	html.Div([
-		html.Div([html.H3('Buy / Sell Decision'), ], className='div-33'),
-		html.Div([html.H3('Warning Flags'), ], className='div-33'),
-	], className='sentiment_div', ),
-
-	html.Div([
 
 		html.Div([dcc.Graph(id='decision-chart', config={'displayModeBar': False}, style={'align': 'center', }),
-				  html.Table(id='reason-list'),],
+				html.Div([html.H3('Warning Flags'), ], className='indicators'),
+				html.Table(id='reason-list'),],
 				 id='decision-chart-div', className='indicators', ),
 
 		html.Div([], id='expected-future-price-table', style={'display': 'none'}, ),
 		html.Div(
-			[html.Div([html.Button('Current', id='current-button', n_clicks_timestamp=0, className='div-30 button'),
-					html.Button('1 Month Ago', id='one_month', n_clicks_timestamp=0, className='div-30 button'),
-					html.Button('3 Month Ago', id='three_month', n_clicks_timestamp=0, className='div-30 button'), ],
-					className='buttons-container'),
-			 dcc.Graph(id='analyst-chart', config={'displayModeBar': False}, style={'align': 'center', }), ],
+			[
+			dcc.Graph(id='analyst-chart', config={'displayModeBar': False}, style={'align': 'center', }),
+			html.Div([html.Button('Current', id='current-button', n_clicks_timestamp=0, className='div-30 button'),
+					  html.Button('1 Month Ago', id='one_month', n_clicks_timestamp=0, className='div-30 button'),
+					  html.Button('3 Month Ago', id='three_month', n_clicks_timestamp=0,
+								  className='div-30 button'), ],
+						 className='buttons-container'),
+			],
 			style={'display': 'block'}, className='indicators', ),
 
 		html.Div([ ], className='indicators', ),
@@ -374,7 +373,7 @@ def generate_future_price_table(no_input,selected_dropdown_value, max_rows=10):
 				dict(type='path', path=path, fillcolor='rgba(44, 160, 101, 0.5)',
 					line_width=0.5, xref='paper', yref='paper')],
 
-			margin=go.layout.Margin(l=30, r=0, b=0, t=30, ),
+			margin=go.layout.Margin(l=30, r=0, b=0, t=40, ),
 		),
 	}
 
