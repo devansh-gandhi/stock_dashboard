@@ -47,9 +47,8 @@ def loadanalystrating(ticker,es):
 		{'number': eno, 'mean': emean,  'high': ehigh, 'low': elow, 'variance': evariance },
 		index=['this_quarter', 'next_quarter', 'this_fiscal','next_fiscal'])
 
-	print(df)
+
 	for index, row in df.iterrows():
-		print(index,row)
 		es.index(index='future_estimate_data', ignore=400, body={
 			'stock-symbol': ticker,
 			'duration': index,

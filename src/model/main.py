@@ -29,7 +29,7 @@ if __name__ == '__main__':
 	es = Elasticsearch(es_header)
 
 	#keyword = sys.argv[1]
-	keyword = 'Microsoft'
+	keyword = 'Apple'
 
 	stock_dict = {"apple": "AAPL", "google": "GOOG", "microsoft": "MSFT", "amazon": "AMZN", "facebook": "FB",
                    "walmart": "WMT", "intel": "INTC", "barclays": "BCS"}

@@ -74,16 +74,7 @@ layout = html.Div([
 				 id='decision-chart-div', className='indicators', ),
 
 		html.Div([], id='expected-future-price-table', style={'display': 'none'}, ),
-		html.Div(
-			[
-			dcc.Graph(id='analyst-chart', className='chart', config={'displayModeBar': False},),
-			html.Div([html.Button('Current', id='current-button', n_clicks_timestamp=0, className='div-30 button'),
-					  html.Button('1 Month Ago', id='one_month', n_clicks_timestamp=0, className='div-30 button'),
-					  html.Button('3 Month Ago', id='three_month', n_clicks_timestamp=0,
-								  className='div-30 button'), ],
-						 className='buttons-container'),
-			],
-			style={'display': 'block'}, className='indicators', ),
+
 
 		html.Div([dcc.Graph(id='future-estimate-chart',className='chart', style={'height':'30vh'} ,config={'displayModeBar': False}, ),
 
@@ -110,6 +101,17 @@ layout = html.Div([
 								'font-size': '13px', 'align': 'center',
 								}),
 		], className='indicators', ),
+
+		html.Div(
+			[
+			dcc.Graph(id='analyst-chart', className='chart', config={'displayModeBar': False},),
+			html.Div([html.Button('Current', id='current-button', n_clicks_timestamp=0, className='div-30 button'),
+					  html.Button('1 Month Ago', id='one_month', n_clicks_timestamp=0, className='div-30 button'),
+					  html.Button('3 Month Ago', id='three_month', n_clicks_timestamp=0,
+								  className='div-30 button'), ],
+						 className='buttons-container'),
+			],
+			style={'display': 'block'}, className='indicators', ),
 
 		#
 	], className='sentiment_div', ),
@@ -287,11 +289,23 @@ def generate_analyst_graph(current,one_month,three_month,selected_dropdown_value
 		analyst_data_df = analyst_data_df[analyst_data_df['duration'] == 'current']
 		title = 'Current Analyst Rating'
 
-	data = [go.Bar(x=analyst_data_df[['sell', 'hold', 'buy']].values.tolist()[0],
-				   y=['Sell', 'Hold', 'Buy'],orientation='h',
-				   marker = dict(color=[ '#7ED5EA', '#4B9FE1',"#28559A"]),),
-			]
 
+
+	data = [go.Pie(
+		values=analyst_data_df[['sell', 'hold', 'buy']].values.tolist()[0],
+		labels=[  "Sell","Hold", "Buy"],
+		domain={"x": [0, .8]},
+		marker_colors=[  '#7ED5EA','#4B9FE1', '#28559A'],
+
+		name="Gauge",
+		hole=.3,
+		direction="clockwise",
+		rotation=90,
+		showlegend=False,
+		hoverinfo="none",
+		textinfo="label",
+		textposition="inside"
+	)]
 
 	figure = {
 		'data': data,
@@ -304,7 +318,7 @@ def generate_analyst_graph(current,one_month,three_month,selected_dropdown_value
 
 
 
-# for the Analyst Rating graph
+# for the Future Estimate graph
 @app.callback(
 			[Output('future-estimate-chart', 'figure'),
 			 Output('number_estimate', 'children'),
@@ -339,8 +353,8 @@ def generate_future_estimate_graph(duration,selected_dropdown_value):
 	number = int(float(future_estimate_data_df['number']))
 	variance = future_estimate_data_df['variance']
 
-	data = [go.Bar(x=['low', 'mean', 'high'],
-		y=future_estimate_data_df[['low', 'mean', 'high']].values.tolist()[0],
+	data = [go.Bar(x=future_estimate_data_df[['low', 'mean', 'high']].values.tolist()[0],
+		y=['low', 'mean', 'high'], orientation='h',
 				marker = dict(color=[ '#7ED5EA', '#4B9FE1',"#28559A"]),),
 			]
 
