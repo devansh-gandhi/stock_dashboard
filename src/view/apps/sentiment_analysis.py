@@ -102,7 +102,7 @@ def news_modal():
 layout = html.Div([
 
 	html.Div([
-		dcc.RadioItems(id='radio-div',
+		dcc.RadioItems(id='radio-div', className='radio-div',
 			options=[
 				{'label': ' Company Name', 'value': 'CN'},
 				{'label': ' Extract', 'value': 'EX'},

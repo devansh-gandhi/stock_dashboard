@@ -93,23 +93,25 @@ layout = html.Div([
 					html.Div(['Coefficient Variance'] , className='div-50 estimate-head'),
 				], className='sentiment_div',),
 				html.Div([
-					html.Div([] , id='number_estimate', className='div-50 estimate-block'),
-					html.Div([] , id='variance_estimate', className='div-50 estimate-block'),
+					html.Div([] , id='number_estimate', className='div-40 estimate-block'),
+					html.Div([] , id='variance_estimate', className='div-40 estimate-block'),
 
-				], className='sentiment_div',),
+				], className='sentiment_div', style={'margin-top':'0px'}),
 
 				dcc.RadioItems(
 					options=[
-						{'label': 'This Quarter', 'value': 'this_quarter'},
-						{'label': 'Next Quarter', 'value': 'next_quarter'},
-						{'label': 'This Fiscal', 'value': 'this_fiscal'},
-						{'label': 'Next Fiscal', 'value': 'next_fiscal'}
+						{'label': ' This Quarter', 'value': 'this_quarter'},
+						{'label': ' Next Quarter', 'value': 'next_quarter'},
+						{'label': ' This Fiscal', 'value': 'this_fiscal'},
+						{'label': ' Next Fiscal', 'value': 'next_fiscal'}
 					],
-					value='this_quarter', id= 'duration', inputStyle = {'width': '50', 'background-color':'#000'},
-					labelStyle={'display': 'inline-block'}),
+					value='this_quarter', id= 'duration',
+					labelStyle={'display': 'inline-block','width': '24%' ,'margin': '0 auto', 'margin-top':'10px' ,
+								'font-size': '13px', 'align': 'center',
+								}),
 		], className='indicators', ),
 
-
+		#
 	], className='sentiment_div', ),
 
 
