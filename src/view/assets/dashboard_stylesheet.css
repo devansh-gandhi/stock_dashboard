@@ -35,6 +35,11 @@ body, html {
 
 }
 
+#duration{
+    width: 95%;
+    margin: 0 auto;
+    
+}
 
 
 #text_search{
