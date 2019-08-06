@@ -368,6 +368,12 @@ body, html {
 }
 
 
+#reason-list{
+    text-align: center;
+    width: 95%;
+}
+
+
 #news_table_data{
     border-collapse: collapse;
     height: 35vh;
