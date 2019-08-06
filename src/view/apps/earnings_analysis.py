@@ -68,7 +68,7 @@ layout = html.Div([
 
 	html.Div([
 
-		html.Div([dcc.Graph(id='decision-chart', config={'displayModeBar': False}, style={'align': 'center', }),
+		html.Div([dcc.Graph(id='decision-chart',className='chart', config={'displayModeBar': False},),
 				html.Div([html.H3('Warning Flags'), ], className='warningflagdiv'),
 				html.Table(id='reason-list'),],
 				 id='decision-chart-div', className='indicators', ),
@@ -76,7 +76,7 @@ layout = html.Div([
 		html.Div([], id='expected-future-price-table', style={'display': 'none'}, ),
 		html.Div(
 			[
-			dcc.Graph(id='analyst-chart', config={'displayModeBar': False}, style={'align': 'center', }),
+			dcc.Graph(id='analyst-chart', className='chart', config={'displayModeBar': False},),
 			html.Div([html.Button('Current', id='current-button', n_clicks_timestamp=0, className='div-30 button'),
 					  html.Button('1 Month Ago', id='one_month', n_clicks_timestamp=0, className='div-30 button'),
 					  html.Button('3 Month Ago', id='three_month', n_clicks_timestamp=0,
@@ -85,7 +85,29 @@ layout = html.Div([
 			],
 			style={'display': 'block'}, className='indicators', ),
 
-		html.Div([ ], className='indicators', ),
+		html.Div([dcc.Graph(id='future-estimate-chart',className='chart', style={'height':'30vh'} ,config={'displayModeBar': False}, ),
+
+
+				html.Div([
+					html.Div(['Number of Estimates'] , className='div-50 estimate-head'),
+					html.Div(['Coefficient Variance'] , className='div-50 estimate-head'),
+				], className='sentiment_div',),
+				html.Div([
+					html.Div([] , id='number_estimate', className='div-50 estimate-block'),
+					html.Div([] , id='variance_estimate', className='div-50 estimate-block'),
+
+				], className='sentiment_div',),
+
+				dcc.RadioItems(
+					options=[
+						{'label': 'This Quarter', 'value': 'this_quarter'},
+						{'label': 'Next Quarter', 'value': 'next_quarter'},
+						{'label': 'This Fiscal', 'value': 'this_fiscal'},
+						{'label': 'Next Fiscal', 'value': 'next_fiscal'}
+					],
+					value='this_quarter', id= 'duration', inputStyle = {'width': '50', 'background-color':'#000'},
+					labelStyle={'display': 'inline-block'}),
+		], className='indicators', ),
 
 
 	], className='sentiment_div', ),
@@ -207,7 +229,7 @@ def update_indicator_graph(tech_dropdown_value,selected_dropdown_value):
 def generate_critical_graph(critical_dropdown_value,selected_dropdown_value):
 
 	es = get_es()
-	financial_data_dict = es.search(index='financial_data',body={"size": 2000, "query": {"match": {"stock-symbol": selected_dropdown_value}}})
+	financial_data_dict = es.search(index='financial_data',body={"size": 20, "query": {"match": {"stock-symbol": selected_dropdown_value}}})
 	initial_df = pd.DataFrame.from_dict(financial_data_dict['hits']['hits'])
 	financial_data_df = pd.concat([initial_df.drop(['_source'], axis=1), initial_df['_source'].apply(pd.Series)],
 								  axis=1)
@@ -246,7 +268,7 @@ def generate_analyst_graph(current,one_month,three_month,selected_dropdown_value
 
 	es = get_es()
 	analyst_data_dict = es.search(index='analyst_data',
-									body={"size": 2000, "query": {"match": {"stock-symbol": selected_dropdown_value}}})
+									body={"size": 20, "query": {"match": {"stock-symbol": selected_dropdown_value}}})
 	initial_df = pd.DataFrame.from_dict(analyst_data_dict['hits']['hits'])
 	analyst_data_df = pd.concat([initial_df.drop(['_source'], axis=1), initial_df['_source'].apply(pd.Series)],
 								  axis=1)
@@ -278,6 +300,57 @@ def generate_analyst_graph(current,one_month,three_month,selected_dropdown_value
 
 	return figure
 
+
+
+# for the Analyst Rating graph
+@app.callback(
+			[Output('future-estimate-chart', 'figure'),
+			 Output('number_estimate', 'children'),
+			 Output('variance_estimate', 'children'),],
+				[
+				Input('duration', 'value'),
+				],
+			  [State('selected_dropdown_store', 'data'),]
+			  )
+def generate_future_estimate_graph(duration,selected_dropdown_value):
+
+	es = get_es()
+	future_estimate_data_dict = es.search(index='future_estimate_data',
+									body={"size": 20, "query": {"match": {"stock-symbol": selected_dropdown_value}}})
+	initial_df = pd.DataFrame.from_dict(future_estimate_data_dict['hits']['hits'])
+	future_estimate_data_df = pd.concat([initial_df.drop(['_source'], axis=1), initial_df['_source'].apply(pd.Series)],
+								  axis=1)
+
+	future_estimate_data_df = future_estimate_data_df[future_estimate_data_df['duration'] == duration]
+
+	if duration == 'this_quarter' :
+		title = 'EPS Estimates This Quarter'
+	elif duration == 'next_quarter':
+		title = 'EPS Estimates Next Quarter'
+	elif duration == 'this_fiscal':
+		title = 'EPS Estimates This Fiscal'
+	elif duration == 'next_fiscal':
+		title = 'EPS Estimates Next Fiscal'
+	else:
+		title = 'EPS Estimates This Quarter'
+
+	number = int(float(future_estimate_data_df['number']))
+	variance = future_estimate_data_df['variance']
+
+	data = [go.Bar(x=['low', 'mean', 'high'],
+		y=future_estimate_data_df[['low', 'mean', 'high']].values.tolist()[0],
+				marker = dict(color=[ '#7ED5EA', '#4B9FE1',"#28559A"]),),
+			]
+
+
+	figure = {
+		'data': data,
+		'layout': go.Layout(title= title ,
+							margin=go.layout.Margin(l=40, r=40, b=30, t=40, ), showlegend=False, )
+	}
+
+
+	return figure , number, variance
 
 
 

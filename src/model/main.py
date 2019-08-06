@@ -45,4 +45,5 @@ if __name__ == '__main__':
 
 	#exec(open('LoadAnalystRating.py').read())
 	#exec(open('LoadFinancialData.py').read())
+	exec(open('LoadFutureEstimates.py').read())
 	exec(open('TwitterStream.py').read())

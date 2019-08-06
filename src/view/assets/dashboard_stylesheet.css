@@ -275,16 +275,6 @@ body, html {
     height: 100%;
 }
 
-#decision-chart{
-    align: center;
-    margin: 0 auto;
-    height: 35vh;
-    textAlign: center;
-    width:100%;
-
-
-
-}
 
 #decision-div{
     height: 5vh;
@@ -307,14 +297,12 @@ body, html {
 }
 
 
-#analyst-chart{
+.chart{
     align: center;
     margin: 0 auto;
     height: 35vh;
     textAlign: center;
     width:100%;
-
-
 
 }
 .warningflagdiv{
