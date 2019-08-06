@@ -117,9 +117,8 @@ layout = html.Div([
 		html.Div([dcc.Input(id='text_search', value='', placeholder='Enter a extract....', ),
 				html.Button('Submit', id='button'), ], id='extract_div', style={"display": "none"}),
 
-		html.Div([dcc.Graph(id='wordcloud', style={"display": "block", }), ], id='wordcloud-div',
-				style={"display": "none"}),
-		html.Div(id='test'),
+		html.Div([dcc.Graph(id='wordcloud',config={'displayModeBar': False}, style={"display": "block", }), ], id='wordcloud-div',
+				style={"display": "block"}),
 
 	], id='my-dropdown-div'),
 
@@ -483,6 +482,21 @@ def reset_clickData(n_clicks):
 	return None
 
 
+
+
+@app.callback(
+	[Output('wordcloud', 'style'),
+	 Output('wordcloud-div', 'style'),
+	 Output('text_search', 'value'),],
+	[Input('button', 'n_clicks')])
+def display_wordcloud_onclick(value):
+	if value is not None:
+		return {"display": "block"} , {"display": "block" ,'box-shadow': '0px 0px 5px 0px rgba(0,0,0,0.2)'} , ''
+	else:
+		return {"display": 'none'}, {"display": 'none'}, ''
+
+
+
 @app.callback(
 	Output('wordcloud', 'figure'),
 	[Input('button', 'n_clicks')],
@@ -527,17 +541,4 @@ def wordcloud(clicks, y):
 	fig = go.Figure(data=data, layout=layout, )
 	return fig
 
-
-
-
-@app.callback(
-	[Output('wordcloud', 'style'),
-	 Output('wordcloud-div', 'style'),
-	 Output('text_search', 'value'),],
-	[Input('button', 'n_clicks')])
-def display_wordcloud_onclick(value):
-	if value is not None:
-		return {"display": "block"} , {'box-shadow': '0px 0px 5px 0px rgba(0,0,0,0.2)'} , ''
-	else:
-		return {"display": 'none'}, {"display": 'none'}, ''
 
