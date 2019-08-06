@@ -299,11 +299,14 @@ body, html {
 
 
 .chart{
+    display: flex;
+    justify-content: space-between;
+    width:100%;
     align: center;
     margin: 0 auto;
     height: 35vh;
     textAlign: center;
-    width:100%;
+
 
 }
 .warningflagdiv{

@@ -98,7 +98,7 @@ layout = html.Div([
 					],
 					value='this_quarter', id= 'duration',
 					labelStyle={'display': 'inline-block','width': '24%' ,'margin': '0 auto', 'margin-top':'10px' ,
-								'font-size': '13px', 'align': 'center',
+								'font-size': '11px', 'align': 'center', 'text-align':'center'
 								}),
 		], className='indicators', ),
 
@@ -310,7 +310,7 @@ def generate_analyst_graph(current,one_month,three_month,selected_dropdown_value
 	figure = {
 		'data': data,
 		'layout': go.Layout(title= title ,
-							margin=go.layout.Margin(l=40, r=40, b=30, t=40, ), showlegend=False, )
+							margin=go.layout.Margin(l=50, r=0, b=30, t=40, ), showlegend=False, )
 	}
 
 
@@ -462,7 +462,7 @@ def generate_future_price_table(no_input,selected_dropdown_value, max_rows=10):
 				dict(type='path', path=path, fillcolor='rgba(44, 160, 101, 0.5)',
 					line_width=0.5, xref='paper', yref='paper')],
 
-			margin=go.layout.Margin(l=30, r=0, b=0, t=40, ),
+			margin=go.layout.Margin(l=50, r=0, b=0, t=40, ),
 		),
 	}
 
