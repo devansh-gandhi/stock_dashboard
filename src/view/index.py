@@ -21,7 +21,7 @@ app.layout = html.Div([
 		children=[
 
 			dcc.Tab(label='Market Sentiment Analysis',value='sentiment_tab' ),
-			dcc.Tab(label='Earnings Call Analysis', value='earnings_tab'),
+			dcc.Tab(label='Techincal Analysis', value='earnings_tab'),
 
 		],
 		value="sentiment_tab",
