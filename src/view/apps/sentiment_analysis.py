@@ -107,12 +107,12 @@ layout = html.Div([
 				{'label': ' Company Name', 'value': 'CN'},
 				{'label': ' Extract', 'value': 'EX'},
 			],
-			value='CN',labelStyle={'display': 'inline-block'}
+			value='CN', labelStyle={'display': 'inline-block'}
 		),
 
 		dcc.Dropdown(id='my-dropdown',
 				options=[{'label': 'Microsoft', 'value': 'MSFT'}, {'label': 'Apple', 'value': 'AAPL'},
-							{'label': 'Google', 'value': 'GOOG'}], value='MSFT', ),
+							{'label': 'Google', 'value': 'GOOG'}], value='MSFT',searchable=False, ),
 
 		html.Div([dcc.Input(id='text_search', value='', placeholder='Enter a extract....', ),
 				html.Button('Submit', id='button'), ], id='extract_div', style={"display": "none"}),

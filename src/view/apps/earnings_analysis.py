@@ -84,8 +84,8 @@ layout = html.Div([
 					html.Div(['Coefficient Variance'] , className='div-50 estimate-head'),
 				], className='sentiment_div',),
 				html.Div([
-					html.Div([] , id='number_estimate', className='div-40 estimate-block'),
-					html.Div([] , id='variance_estimate', className='div-40 estimate-block'),
+					html.Div([], id='number_estimate', className='div-40 estimate-block'),
+					html.Div([], id='variance_estimate', className='div-40 estimate-block'),
 
 				], className='sentiment_div', style={'margin-top':'0px'}),
 

@@ -315,7 +315,7 @@ body, html {
 }
 .warningflagdiv{
     text-align: center;
-    margin-top: 0px;
+    margin-top: -0.5vh;
 }
 
 
@@ -331,16 +331,15 @@ body, html {
     color: #555;
     font-size: 14px;
     font-weight: 600;
-    vertical-align: middle;
+    letter-spacing: .1rem;
+    line-height: 3vh;
     text-transform: uppercase;
     text-decoration: none;
     white-space: nowrap;
     background-color: transparent;
     border: 1px solid #bbb;
-    cursor: pointer;
     box-sizing: border-box;
-    margin-top: 0;
-
+   vertical-align: middle;
 
 }
 #main_table{
@@ -348,7 +347,7 @@ body, html {
     textAlign: center;
     align: center;
     width: 90%;
-    margin: 0px auto;
+    margin: 0 auto;
     margin-top: 10px;
 }
 
@@ -383,7 +382,7 @@ body, html {
     height: 35vh;
     overflow-y: scroll;
     margin: 0 auto;
-       box-shadow: 0px 0px 5px 0px rgba(0,0,0,0.2);
+    box-shadow: 0px 0px 5px 0px rgba(0,0,0,0.2);
     width: 100%;
     margin-bottom: 5%;
 }
