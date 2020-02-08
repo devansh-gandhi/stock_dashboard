@@ -380,7 +380,7 @@ def generate_reason_list(no_input, selected_dropdown_value):
 								  axis=1)
 
 	#financialreportingdf = getfinancialreportingdfformatted(selected_dropdown_value.strip().lower()).reset_index()
-	reasonlist = financial_data_df['reasonlist']
+	reasonlist = financial_data_df.loc[0,'reasonlist']
 	# print(financialreportingdf)
 	# Header
 	return [html.Tr(html.Td(reason)) for reason in reasonlist]
@@ -410,8 +410,8 @@ def generate_future_price_table(no_input,selected_dropdown_value, max_rows=10):
 	#stock_data_df['timestamp'] = stock_data_df['timestamp'].dt.date
 
 	#pricedf = generate_price_df(selected_dropdown_value.strip(), financial_data_df, stock_data_df, 0.15,0.15)
-
-	pricedf = pd.DataFrame.from_dict(financial_data_df['future_pricing'])
+	print()
+	pricedf = pd.DataFrame(financial_data_df.loc[0,'future_pricing'] )
 
 	data = [go.Pie(
 		values=[50, 16.5, 17, 16.5],
