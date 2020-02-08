@@ -1,7 +1,8 @@
-from Transform import Transform
+from src.model.Transform import Transform
 import requests, json, os
 from elasticsearch import Elasticsearch
-
+import pandas as pd
+from datetime import datetime
 
 
 class Load:
@@ -17,7 +18,7 @@ class Load:
 		stock_data = self.transform.get_stock_data()
 
 		for value in stock_data['Time Series (Daily)']:
-			if value >= '2014-01-01':
+			if value >= '2016-01-01':
 				self.es.index(index='stock_data', ignore=400, doc_type='external', body={
 					'company_name': self.company_name,
 					'stock-symbol': stock_data['Meta Data']['2. Symbol'],
