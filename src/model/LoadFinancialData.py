@@ -104,11 +104,25 @@ def getfinancialreportingdfformatted(ticker, es):
 
 	stock_data_df['timestamp'] = pd.to_datetime(stock_data_df.timestamp, infer_datetime_format=True)
 	stock_data_df['timestamp'] = stock_data_df['timestamp'].dt.date
-	print(stock_data_df['timestamp'].dtype)
 	pricedf = generate_price_df(ticker, dfformatted, stock_data_df, 0.15, 0.15)
+
+	price_list = pricedf.to_dict()
 
 	reasonlist = eligibilitycheck(ticker, dfformatted)
 
+	dfformatted['reasonlist'] = [reasonlist, None,None,None,None]
+	#dfformatted['reasonlist'].iloc[0] = reasonlist
+
+
+
+	dfformatted['future_pricing'] =[price_list, None,None,None,None]
+
+	#dfformatted['future_pricing'].iloc[0] = 1
+	#dfformatted = dfformatted.set_value(0,'future_pricing', price_list)
+	#print(dfformatted['future_pricing'].iloc[0])
+
+	#print(dfformatted.dtypes)
+	#dfformatted['future_pricing'].iloc[0] = price_list
 	for index, row in dfformatted.iterrows():
 		es.index(index='financial_data', ignore=400, body={
 			'stock-symbol': ticker,
@@ -121,15 +135,12 @@ def getfinancialreportingdfformatted(ticker, es):
 			'longtermdebt': row['longtermdebt'],
 			'interestexpense': row['interestexpense'],
 			'ebitda': row['ebitda'],
-			'roe': row['roe']
-
+			'roe': row['roe'],
+			'interestcoverageratio': row['interestcoverageratio'],
+			'reasonlist': row['reasonlist'],
+			'future_pricing': row['future_pricing']
 		})
 
-	es.index(index='financial_data', ignore=400, body={
-		'reasonlist': reasonlist,
-		'future_pricing': pricedf.to_dict()
-
-	})
 
 
 if __name__ == '__main__':
