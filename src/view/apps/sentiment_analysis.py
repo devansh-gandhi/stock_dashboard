@@ -112,7 +112,7 @@ layout = html.Div([
 
 		dcc.Dropdown(id='my-dropdown',
 				options=[{'label': 'Microsoft', 'value': 'MSFT'}, {'label': 'Apple', 'value': 'AAPL'},
-							{'label': 'Google', 'value': 'GOOG'}], value='MSFT',searchable=False, ),
+							{'label': 'Google', 'value': 'GOOG'}, {'label': 'Amazon', 'value': 'AMZN'}], value='MSFT',searchable=False, ),
 
 		html.Div([dcc.Input(id='text_search', value='', placeholder='Enter a extract....', ),
 				html.Button('Submit', id='button'), ], id='extract_div', style={"display": "none"}),
@@ -189,7 +189,7 @@ layout = html.Div([
 	[State('text_search', 'value'),]
 )
 def upload_data_selected_dropdown_store(selected_dropdown_value, wordcloud_data,nclicks,text_search):
-	dropdown = {"Microsoft": "MSFT", "Apple": "AAPL", "Google": "GOOG", }
+	dropdown = {"Microsoft": "MSFT", "Apple": "AAPL", "Google": "GOOG", "Amazon":"AMZN" }
 	if nclicks:
 		if text_search != '':
 			company = context_search(text_search)
@@ -225,7 +225,7 @@ def display_search_field(value):
 def update_graph(no_input,selected_dropdown_value):
 
 
-	dropdown = {"MSFT": "Microsoft", "AAPL": "Apple", "GOOG": "Google", }
+	dropdown = {"MSFT": "Microsoft", "AAPL": "Apple", "GOOG": "Google", "AMZN":"Amazon" }
 	trace1 = []
 	trace2 = []
 
@@ -263,7 +263,7 @@ def update_graph(no_input,selected_dropdown_value):
 			[State('selected_dropdown_store', 'data')])
 def update_piechart(no_input,stock_clickData,selected_dropdown_value):
 
-	dropdown = {"MSFT": "Microsoft", "AAPL": "Apple", "GOOG": "Google"}
+	dropdown = {"MSFT": "Microsoft", "AAPL": "Apple", "GOOG": "Google", "AMZN":"Amazon"}
 	es = get_es()
 	label_data_dict = es.search(index='tweets_data', body={"size": 100, "query": {
 			"match": {"company_name": dropdown[selected_dropdown_value]}}})
@@ -312,7 +312,7 @@ def update_piechart(no_input,stock_clickData,selected_dropdown_value):
 			[State('selected_dropdown_store', 'data')])
 def update_news_feed(no_input, clickData, stock_clickData, selected_dropdown_value,):
 
-	dropdown = {"MSFT": "Microsoft", "AAPL": "Apple", "GOOG": "Google"}
+	dropdown = {"MSFT": "Microsoft", "AAPL": "Apple", "GOOG": "Google", "AMZN":"Amazon"}
 
 	es = get_es()
 	news_data_dict = es.search(index='news_data', body={"size": 100, "query": {
@@ -399,7 +399,7 @@ def close_modal_callback(n):
 			[State('selected_dropdown_store', 'data')])
 def update_tweet_feed(no_input, clickData, stock_clickData,selected_dropdown_value ):
 
-	dropdown = {"MSFT": "Microsoft", "AAPL": "Apple", "GOOG": "Google", "FB": 'Facebook'}
+	dropdown = {"MSFT": "Microsoft", "AAPL": "Apple", "GOOG": "Google", "FB": 'Facebook', "AMZN":"Amazon"}
 	es = get_es()
 	tweet_data_dict = es.search(index='tweets_data', body={"size": 100, "query": {
 			"match": {"company_name": dropdown[selected_dropdown_value]}}})

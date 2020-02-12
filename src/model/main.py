@@ -4,6 +4,9 @@ import os
 import os, base64, re, logging
 import sys
 
+import sys
+sys.path
+
 if __name__ == '__main__':
 	# Log transport details (optional):
 	logging.basicConfig(level=logging.INFO)
@@ -29,7 +32,7 @@ if __name__ == '__main__':
 	es = Elasticsearch(es_header)
 
 	#keyword = sys.argv[1]
-	keyword = 'Google'
+	keyword = 'Microsoft'
 
 	stock_dict = {"apple": "AAPL", "google": "GOOG", "microsoft": "MSFT", "amazon": "AMZN", "facebook": "FB",
                    "walmart": "WMT", "intel": "INTC", "barclays": "BCS"}
@@ -37,13 +40,13 @@ if __name__ == '__main__':
 
 	print(stock_ticker)
 
-	data = Load(keyword,es)
+	#data = Load(keyword,es)
 	#data.load_stock_data()
-	data.load_news_data()
+	#data.load_news_data()
 
 
 
 	#exec(open('LoadAnalystRating.py').read())
-	#exec(open('LoadFinancialData.py').read())
+	exec(open('LoadFinancialData.py').read())
 	#exec(open('LoadFutureEstimates.py').read())
-	exec(open('TwitterStream.py').read())
+	#exec(open('TwitterStream.py').read())

@@ -167,8 +167,6 @@ def update_indicator_graph(tech_dropdown_value,selected_dropdown_value):
 	initial_df = pd.DataFrame.from_dict(data_dict['hits']['hits'])
 	stock_data_df = pd.concat([initial_df.drop(['_source'], axis=1), initial_df['_source'].apply(pd.Series)],axis=1)
 
-	stock_data_df['timestamp'] = pd.to_datetime(stock_data_df.timestamp, infer_datetime_format=True)
-
 	if tech_dropdown_value == 'SMA' or tech_dropdown_value == 'EMA':
 		trace1.append(go.Scatter(x=stock_data_df[stock_data_df["stock-symbol"] == selected_dropdown_value]["timestamp"],
 			y=stock_data_df[stock_data_df["stock-symbol"] == selected_dropdown_value]["close"],
@@ -237,10 +235,6 @@ def generate_critical_graph(critical_dropdown_value,selected_dropdown_value):
 	initial_df = pd.DataFrame.from_dict(financial_data_dict['hits']['hits'])
 	financial_data_df = pd.concat([initial_df.drop(['_source'], axis=1), initial_df['_source'].apply(pd.Series)],
 								  axis=1)
-	for i in ['netincome', 'shareholderequity', 'longtermdebt', 'interestexpense', 'ebitda']:
-		financial_data_df[i] = financial_data_df[i].astype('int64')
-
-	financial_data_df['interestcoverageratio'] = financial_data_df.ebitda / financial_data_df.interestexpense
 
 	financialreportingwritten = financial_data_df
 	financialreportingwritten[['roe', 'interestcoverageratio']] = np.round(financial_data_df[['roe', 'interestcoverageratio']], 2)
@@ -384,13 +378,9 @@ def generate_reason_list(no_input, selected_dropdown_value):
 	initial_df = pd.DataFrame.from_dict(financial_data_dict['hits']['hits'])
 	financial_data_df = pd.concat([initial_df.drop(['_source'], axis=1), initial_df['_source'].apply(pd.Series)],
 								  axis=1)
-	for i in ['netincome', 'shareholderequity', 'longtermdebt', 'interestexpense', 'ebitda']:
-		financial_data_df[i] = financial_data_df[i].astype('int64')
-
-	financial_data_df['interestcoverageratio'] = financial_data_df.ebitda / financial_data_df.interestexpense
 
 	#financialreportingdf = getfinancialreportingdfformatted(selected_dropdown_value.strip().lower()).reset_index()
-	reasonlist = eligibilitycheck(selected_dropdown_value.strip().lower(), financial_data_df)
+	reasonlist = financial_data_df.loc[0,'reasonlist']
 	# print(financialreportingdf)
 	# Header
 	return [html.Tr(html.Td(reason)) for reason in reasonlist]
@@ -412,18 +402,16 @@ def generate_future_price_table(no_input,selected_dropdown_value, max_rows=10):
 	initial_df = pd.DataFrame.from_dict(financial_data_dict['hits']['hits'])
 	financial_data_df = pd.concat([initial_df.drop(['_source'], axis=1), initial_df['_source'].apply(pd.Series)],
 								  axis=1)
-	for i in ['netincome', 'shareholderequity', 'longtermdebt', 'interestexpense', 'ebitda']:
-		financial_data_df[i] = financial_data_df[i].astype('int64')
 
-	data_dict = es.search(index='stock_data',
-						  body={"size": 2000, "query": {"match": {"stock-symbol": selected_dropdown_value}}})
-	initial_df = pd.DataFrame.from_dict(data_dict['hits']['hits'])
+	#data_dict = es.search(index='stock_data', body={"size": 2000, "query": {"match": {"stock-symbol": selected_dropdown_value}}})
+	#initial_df = pd.DataFrame.from_dict(data_dict['hits']['hits'])
+	#stock_data_df = pd.concat([initial_df.drop(['_source'], axis=1), initial_df['_source'].apply(pd.Series)], axis=1)
 
-	stock_data_df = pd.concat([initial_df.drop(['_source'], axis=1), initial_df['_source'].apply(pd.Series)], axis=1)
-	stock_data_df['timestamp'] = pd.to_datetime(stock_data_df.timestamp, infer_datetime_format=True)
-	stock_data_df['timestamp'] = stock_data_df['timestamp'].dt.date
+	#stock_data_df['timestamp'] = stock_data_df['timestamp'].dt.date
 
-	pricedf = generate_price_df(selected_dropdown_value.strip(), financial_data_df, stock_data_df, 0.15,0.15)
+	#pricedf = generate_price_df(selected_dropdown_value.strip(), financial_data_df, stock_data_df, 0.15,0.15)
+	print()
+	pricedf = pd.DataFrame(financial_data_df.loc[0,'future_pricing'] )
 
 	data = [go.Pie(
 		values=[50, 16.5, 17, 16.5],
