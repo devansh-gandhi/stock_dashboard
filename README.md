@@ -1,4 +1,6 @@
-# stock_dashboard
+# Stock Dashboard
+
+https://stock-dashboard-app.herokuapp.com/
 
 This is a demo application for a stock dashboard. It is for financial analyst to to make informed investment decisions about the company using Elasticsearch and dash. 
 
