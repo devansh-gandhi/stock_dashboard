@@ -42,6 +42,6 @@ textblob==0.15.3
 thinc==7.0.8
 tqdm==4.32.2
 tweepy==3.8.0
-urllib3==1.25.3
+urllib3==1.26.5
 wasabi==0.2.2
 Werkzeug==0.15.5
